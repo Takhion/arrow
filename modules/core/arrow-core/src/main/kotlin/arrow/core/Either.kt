@@ -15,7 +15,7 @@ import arrow.legacy.RightProjection
  * An instance of Either is either an instance of [Left] or [Right].
  */
 @higherkind
-sealed class Either<out A, out B> : EitherOf<A, B> {
+sealed class Either<out A, out B> : EitherOf<A, B>() {
 
   /**
    * Returns `true` if this is a [Right], `false` otherwise.

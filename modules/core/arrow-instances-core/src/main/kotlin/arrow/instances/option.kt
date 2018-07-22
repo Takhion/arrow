@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.instance
 import arrow.typeclasses.*
@@ -125,14 +126,14 @@ interface OptionFoldableInstance : Foldable<ForOption> {
     fix().nonEmpty()
 }
 
-fun <A, G, B> OptionOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Option<B>> = GA.run {
+fun <A, G: KindType, B> OptionOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Option<B>> = GA.run {
   fix().fold({ just(None) }, { f(it).map { Some(it) } })
 }
 
-fun <A, G> OptionOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Option<A>> =
+fun <A, G: KindType> OptionOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Option<A>> =
   optionTraverse(GA, ::identity)
 
-fun <A, G, B> OptionOf<A>.traverseFilter(GA: Applicative<G>, f: (A) -> Kind<G, Option<B>>): Kind<G, Option<B>> = GA.run {
+fun <A, G: KindType, B> OptionOf<A>.traverseFilter(GA: Applicative<G>, f: (A) -> Kind<G, Option<B>>): Kind<G, Option<B>> = GA.run {
   fix().fold({ just(None) }, f)
 }
 
@@ -141,7 +142,7 @@ interface OptionTraverseInstance : Traverse<ForOption> {
   override fun <A, B> Kind<ForOption, A>.map(f: (A) -> B): Option<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForOption, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Option<B>> =
+  override fun <G: KindType, A, B> Kind<ForOption, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Option<B>> =
     optionTraverse(AP, f)
 
   override fun <A> Kind<ForOption, A>.exists(p: (A) -> Boolean): Boolean =
@@ -168,5 +169,5 @@ object OptionContext : OptionMonadErrorInstance, OptionTraverseInstance {
     fix().map(f)
 }
 
-infix fun <A> ForOption.Companion.extensions(f: OptionContext.() -> A): A =
+infix fun <A> ForOption.extensions(f: OptionContext.() -> A): A =
   f(OptionContext)

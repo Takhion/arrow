@@ -14,12 +14,12 @@ import arrow.typeclasses.Monoid
  * @param A the focus of a [Getter]
  */
 @higherkind
-interface Getter<S, A> : GetterOf<S, A> {
+abstract class Getter<S, A> : GetterOf<S, A>() {
 
   /**
    * Get the focus of a [Getter]
    */
-  fun get(s: S): A
+  abstract fun get(s: S): A
 
   companion object {
 
@@ -33,7 +33,7 @@ interface Getter<S, A> : GetterOf<S, A> {
     /**
      * Invoke operator overload to create a [Getter] of type `S` with focus `A`.
      */
-    operator fun <S, A> invoke(get: (S) -> A) = object : Getter<S, A> {
+    operator fun <S, A> invoke(get: (S) -> A) = object : Getter<S, A>() {
       override fun get(s: S): A = get(s)
     }
   }
@@ -118,7 +118,7 @@ interface Getter<S, A> : GetterOf<S, A> {
 
   operator fun <C> plus(other: Fold<A, C>): Fold<S, C> = compose(other)
 
-  fun asFold(): Fold<S, A> = object : Fold<S, A> {
+  fun asFold(): Fold<S, A> = object : Fold<S, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R = f(get(s))
   }
 

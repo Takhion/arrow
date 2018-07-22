@@ -120,5 +120,5 @@ interface MaybeKEffectInstance :
 
 object MaybeKContext : MaybeKEffectInstance
 
-infix fun <A> ForMaybeK.Companion.extensions(f: MaybeKContext.() -> A): A =
+infix fun <A> ForMaybeK.extensions(f: MaybeKContext.() -> A): A =
   f(MaybeKContext)

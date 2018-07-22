@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -35,10 +36,10 @@ typealias LensKindedJ<S, A> = PLensKindedJ<S, S, A, A>
  * @param B the modified focus of a [PLens]
  */
 @higherkind
-interface PLens<S, T, A, B> : PLensOf<S, T, A, B> {
+abstract class PLens<S, T, A, B> : PLensOf<S, T, A, B>() {
 
-  fun get(s: S): A
-  fun set(s: S, b: B): T
+  abstract fun get(s: S): A
+  abstract fun set(s: S, b: B): T
 
   companion object {
 
@@ -56,7 +57,7 @@ interface PLens<S, T, A, B> : PLensOf<S, T, A, B> {
      * Invoke operator overload to create a [PLens] of type `S` with target `A`.
      * Can also be used to construct [Lens]
      */
-    operator fun <S, T, A, B> invoke(get: (S) -> A, set: (B) -> (S) -> T) = object : PLens<S, T, A, B> {
+    operator fun <S, T, A, B> invoke(get: (S) -> A, set: (B) -> (S) -> T) = object : PLens<S, T, A, B>() {
       override fun get(s: S): A = get(s)
 
       override fun set(s: S, b: B): T = set(b)(s)
@@ -66,14 +67,14 @@ interface PLens<S, T, A, B> : PLensOf<S, T, A, B> {
   /**
    * Modify the focus of a [PLens] using Functor function
    */
-  fun <F> modifyF(FF: Functor<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FF.run {
+  fun <F: KindType> modifyF(FF: Functor<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FF.run {
     f(get(s)).map({ b -> set(s, b) })
   }
 
   /**
    * Lift a function [f]: `(A) -> Kind<F, B> to the context of `S`: `(S) -> Kind<F, T>`
    */
-  fun <F> liftF(FF: Functor<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = { s -> modifyF(FF, s, f) }
+  fun <F: KindType> liftF(FF: Functor<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = { s -> modifyF(FF, s, f) }
 
   /**
    * Join two [PLens] with the same focus in [A]
@@ -191,15 +192,15 @@ interface PLens<S, T, A, B> : PLensOf<S, T, A, B> {
   /**
    * View a [PLens] as a [Fold]
    */
-  fun asFold(): Fold<S, A> = object : Fold<S, A> {
+  fun asFold(): Fold<S, A> = object : Fold<S, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R = f(get(s))
   }
 
   /**
    * View a [PLens] as a [PTraversal]
    */
-  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B> {
-    override fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
+  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
       f(get(s)).map({ b -> this@PLens.set(s, b) })
     }
   }

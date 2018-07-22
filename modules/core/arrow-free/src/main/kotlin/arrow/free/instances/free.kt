@@ -1,6 +1,7 @@
 package arrow.free.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.FunctionK
 import arrow.free.*
@@ -14,14 +15,14 @@ import arrow.free.flatMap as freeFlatMap
 import arrow.free.map as freeMap
 
 @instance(Free::class)
-interface FreeFunctorInstance<S> : Functor<FreePartialOf<S>> {
+interface FreeFunctorInstance<S: KindType> : Functor<FreePartialOf<S>> {
 
   override fun <A, B> Kind<FreePartialOf<S>, A>.map(f: (A) -> B): Free<S, B> =
     fix().freeMap(f)
 }
 
 @instance(Free::class)
-interface FreeApplicativeInstance<S> : FreeFunctorInstance<S>, Applicative<FreePartialOf<S>> {
+interface FreeApplicativeInstance<S: KindType> : FreeFunctorInstance<S>, Applicative<FreePartialOf<S>> {
 
   override fun <A> just(a: A): Free<S, A> = Free.just(a)
 
@@ -33,7 +34,7 @@ interface FreeApplicativeInstance<S> : FreeFunctorInstance<S>, Applicative<FreeP
 }
 
 @instance(Free::class)
-interface FreeMonadInstance<S> : FreeApplicativeInstance<S>, Monad<FreePartialOf<S>> {
+interface FreeMonadInstance<S: KindType> : FreeApplicativeInstance<S>, Monad<FreePartialOf<S>> {
 
   override fun <A, B> Kind<FreePartialOf<S>, A>.map(f: (A) -> B): Free<S, B> =
     fix().freeMap(f)
@@ -52,7 +53,7 @@ interface FreeMonadInstance<S> : FreeApplicativeInstance<S>, Monad<FreePartialOf
   }
 }
 
-interface FreeEq<F, G, A> : Eq<Kind<FreePartialOf<F>, A>> {
+interface FreeEq<F: KindType, G: KindType, A> : Eq<Kind<FreePartialOf<F>, A>> {
 
   fun MG(): Monad<G>
 
@@ -63,19 +64,19 @@ interface FreeEq<F, G, A> : Eq<Kind<FreePartialOf<F>, A>> {
 }
 
 @Suppress("UNUSED_PARAMETER")
-fun <F, G, A> Free.Companion.eq(FK: FunctionK<F, G>, MG: Monad<G>, dummy: Unit = Unit): FreeEq<F, G, A> =
+fun <F: KindType, G: KindType, A> Free.Companion.eq(FK: FunctionK<F, G>, MG: Monad<G>, dummy: Unit = Unit): FreeEq<F, G, A> =
   object : FreeEq<F, G, A> {
     override fun FK(): FunctionK<F, G> = FK
 
     override fun MG(): arrow.typeclasses.Monad<G> = MG
   }
 
-class FreeContext<S> : FreeMonadInstance<S>
+class FreeContext<S: KindType> : FreeMonadInstance<S>
 
-class FreeContextPartiallyApplied<S> {
+class FreeContextPartiallyApplied<S: KindType> {
   infix fun <A> extensions(f: FreeContext<S>.() -> A): A =
     f(FreeContext())
 }
 
-fun <S> ForFree(): FreeContextPartiallyApplied<S> =
+fun <S: KindType> ForFree(): FreeContextPartiallyApplied<S> =
   FreeContextPartiallyApplied()

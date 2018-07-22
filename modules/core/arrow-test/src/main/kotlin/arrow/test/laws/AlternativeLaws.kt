@@ -1,6 +1,7 @@
 package arrow.test.laws
 
 import arrow.Kind
+import arrow.KindType
 import arrow.test.generators.genConstructor
 import arrow.test.generators.genConstructor2
 import arrow.test.generators.genFunctionAToB
@@ -11,7 +12,7 @@ import io.kotlintest.properties.forAll
 
 object AlternativeLaws {
 
-  inline fun <F> laws(AF: Alternative<F>,
+  inline fun <F: KindType> laws(AF: Alternative<F>,
                       noinline cf: (Int) -> Kind<F, Int>,
                       noinline cff: (Int) -> Kind<F, (Int) -> Int>,
                       EQ: Eq<Kind<F, Int>>): List<Law> =
@@ -20,18 +21,18 @@ object AlternativeLaws {
       Law("Alternative Laws: Left Distributivity", { AF.alternativeLeftDistributivity(cf, EQ) }),
       Law("Alternative Laws: Right Distributivity", { AF.alternativeRightDistributivity(cf, cff, EQ) }))
 
-  fun <F> Alternative<F>.alternativeRightAbsorption(cff: (Int) -> Kind<F, (Int) -> Int>, EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Alternative<F>.alternativeRightAbsorption(cff: (Int) -> Kind<F, (Int) -> Int>, EQ: Eq<Kind<F, Int>>): Unit =
     forAll(genConstructor2(Gen.int(), cff), { fa: Kind<F, (Int) -> Int> ->
       empty<Int>().ap(fa).equalUnderTheLaw(empty(), EQ)
     })
 
-  fun <F> Alternative<F>.alternativeLeftDistributivity(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Alternative<F>.alternativeLeftDistributivity(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>): Unit =
     forAll(genConstructor(Gen.int(), cf), genConstructor(Gen.int(), cf), genFunctionAToB<Int, Int>(Gen.int()),
       { fa: Kind<F, Int>, fa2: Kind<F, Int>, f: (Int) -> Int ->
         fa.combineK(fa2).map(f).equalUnderTheLaw(fa.map(f).combineK(fa2.map(f)), EQ)
       })
 
-  fun <F> Alternative<F>.alternativeRightDistributivity(cf: (Int) -> Kind<F, Int>,
+  fun <F: KindType> Alternative<F>.alternativeRightDistributivity(cf: (Int) -> Kind<F, Int>,
                                                         cff: (Int) -> Kind<F, (Int) -> Int>,
                                                         EQ: Eq<Kind<F, Int>>): Unit =
     forAll(genConstructor(Gen.int(), cf), genConstructor2(Gen.int(), cff), genConstructor2(Gen.int(), cff),

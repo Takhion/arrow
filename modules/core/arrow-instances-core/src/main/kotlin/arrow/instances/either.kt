@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.instance
 import arrow.typeclasses.*
@@ -67,14 +68,14 @@ interface EitherFoldableInstance<L> : Foldable<EitherPartialOf<L>> {
     fix().foldRight(lb, f)
 }
 
-fun <G, A, B, C> EitherOf<A, B>.traverse(GA: Applicative<G>, f: (B) -> Kind<G, C>): Kind<G, Either<A, C>> = GA.run {
+fun <G: KindType, A, B, C> EitherOf<A, B>.traverse(GA: Applicative<G>, f: (B) -> Kind<G, C>): Kind<G, Either<A, C>> = GA.run {
   fix().fold({ just(Either.Left(it)) }, { f(it).map({ Either.Right(it) }) })
 }
 
 @instance(Either::class)
 interface EitherTraverseInstance<L> : EitherFoldableInstance<L>, Traverse<EitherPartialOf<L>> {
 
-  override fun <G, A, B> Kind<EitherPartialOf<L>, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Kind<EitherPartialOf<L>, B>> =
+  override fun <G: KindType, A, B> Kind<EitherPartialOf<L>, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Kind<EitherPartialOf<L>, B>> =
     fix().eitherTraverse(AP, f)
 }
 

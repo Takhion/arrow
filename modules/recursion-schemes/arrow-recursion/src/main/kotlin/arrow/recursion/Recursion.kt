@@ -1,12 +1,13 @@
 package arrow.recursion
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Eval
 import arrow.typeclasses.Functor
 
-fun <F, A> Algebra(it: Algebra<F, A>) = it
+fun <F: KindType, A> Algebra(it: Algebra<F, A>) = it
 
-fun <F, A> Coalgebra(it: Coalgebra<F, A>) = it
+fun <F: KindType, A> Coalgebra(it: Coalgebra<F, A>) = it
 
 /**
  * Fold over a kind.
@@ -21,7 +22,7 @@ typealias Coalgebra<F, A> = (A) -> Kind<F, A>
 /**
  * The composition of cata and ana.
  */
-fun <F, A, B> Functor<F>.hylo(
+fun <F: KindType, A, B> Functor<F>.hylo(
   alg: Algebra<F, Eval<B>>,
   coalg: Coalgebra<F, A>,
   a: A

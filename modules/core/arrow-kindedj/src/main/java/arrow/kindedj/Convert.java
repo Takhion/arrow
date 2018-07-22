@@ -3,19 +3,20 @@ package arrow.kindedj;
 import org.jetbrains.annotations.NotNull;
 
 import arrow.Kind;
+import arrow.KindType;
 
-public class Convert {
+public class Convert extends ForConvert {
     @NotNull
     public static <F, A> FromKindedJToArrow<F, A> fromKindedJ(@NotNull io.kindedj.Hk<F, A> hk) {
         return new FromKindedJToArrow<>(hk);
     }
 
     @NotNull
-    public static <F, A> FromArrowToKindedJ<F, A> toKindedJ(@NotNull Kind<F, A> hk) {
+    public static <F extends KindType, A> FromArrowToKindedJ<F, A> toKindedJ(@NotNull Kind<F, A> hk) {
         return new FromArrowToKindedJ<>(hk);
     }
 
-    public static class FromKindedJToArrow<F, A> implements Kind<Kind<ForConvert, F>, A> {
+    public static class FromKindedJToArrow<F, A> extends Kind<Kind<ForConvert, F>, A> {
 
         @NotNull
         private final io.kindedj.Hk<F, A> hk;
@@ -35,7 +36,7 @@ public class Convert {
         }
     }
 
-    public static class FromArrowToKindedJ<F, A> implements io.kindedj.Hk<io.kindedj.Hk<ForConvert, F>, A> {
+    public static class FromArrowToKindedJ<F extends KindType, A> implements io.kindedj.Hk<io.kindedj.Hk<ForConvert, F>, A> {
 
         @NotNull
         private final Kind<F, A> hk;

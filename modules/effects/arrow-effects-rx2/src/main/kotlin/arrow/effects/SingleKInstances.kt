@@ -97,6 +97,6 @@ interface SingleKEffectInstance :
 
 object SingleKContext : SingleKEffectInstance
 
-infix fun <A> ForSingleK.Companion.extensions(f: SingleKContext.() -> A): A =
+infix fun <A> ForSingleK.extensions(f: SingleKContext.() -> A): A =
   f(SingleKContext)
 

@@ -1,6 +1,7 @@
 package arrow.free
 
 import arrow.Kind
+import arrow.KindType
 import arrow.typeclasses.Monad
 import arrow.typeclasses.stateStack
 import kotlin.coroutines.experimental.*
@@ -8,7 +9,7 @@ import kotlin.coroutines.experimental.intrinsics.COROUTINE_SUSPENDED
 import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 
 @RestrictsSuspension
-open class StackSafeMonadContinuation<F, A>(M: Monad<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
+open class StackSafeMonadContinuation<F: KindType, A>(M: Monad<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
   Continuation<Free<F, A>>, Monad<F> by M {
 
   override fun resume(value: Free<F, A>) {
@@ -52,7 +53,7 @@ open class StackSafeMonadContinuation<F, A>(M: Monad<F>, override val context: C
  * This combinator ultimately returns computations lifting to [Free] to automatically for comprehend in a stack-safe way
  * over any stack-unsafe monads.
  */
-fun <F, B> Monad<F>.bindingStackSafe(c: suspend StackSafeMonadContinuation<F, *>.() -> B):
+fun <F: KindType, B> Monad<F>.bindingStackSafe(c: suspend StackSafeMonadContinuation<F, *>.() -> B):
   Free<F, B> {
   val continuation = StackSafeMonadContinuation<F, B>(this)
   val wrapReturn: suspend StackSafeMonadContinuation<F, *>.() -> Free<F, B> = { Free.just(c()) }

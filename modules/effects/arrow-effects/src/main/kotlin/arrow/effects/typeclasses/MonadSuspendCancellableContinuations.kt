@@ -1,6 +1,7 @@
 package arrow.effects.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.effects.data.internal.BindingCancellationException
 import arrow.typeclasses.MonadErrorContinuation
@@ -17,7 +18,7 @@ import kotlin.coroutines.experimental.startCoroutine
 typealias Disposable = () -> Unit
 
 @RestrictsSuspension
-open class MonadDeferCancellableContinuation<F, A>(SC: MonadDefer<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
+open class MonadDeferCancellableContinuation<F: KindType, A>(SC: MonadDefer<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
   MonadErrorContinuation<F, A>(SC), MonadDefer<F> by SC {
 
   protected val cancelled: AtomicBoolean = AtomicBoolean(false)

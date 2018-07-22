@@ -1,6 +1,7 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.core.Eval.Companion.always
 
@@ -14,7 +15,7 @@ import arrow.core.Eval.Companion.always
  *
  * Beyond these it provides many other useful methods related to folding over F<A> values.
  */
-interface Foldable<F> {
+interface Foldable<F: KindType> {
 
   /**
    * Left associative fold on F using the provided function.
@@ -98,7 +99,7 @@ interface Foldable<F> {
    * This method is primarily useful when G<_> represents an action or effect, and the specific A aspect of G<A> is
    * not otherwise needed.
    */
-  fun <G, A, B> Kind<F, A>.traverse_(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Unit> = GA.run {
+  fun <G: KindType, A, B> Kind<F, A>.traverse_(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Unit> = GA.run {
     foldRight(always { just(Unit) }, { a, acc -> f(a).map2Eval(acc) { Unit } }).value()
   }
 
@@ -107,7 +108,7 @@ interface Foldable<F> {
    *
    * Similar to traverse except it operates on F<G<A>> values, so no additional functions are needed.
    */
-  fun <G, A> Kind<F, Kind<G, A>>.sequence_(ag: Applicative<G>): Kind<G, Unit> = traverse_(ag, ::identity)
+  fun <G: KindType, A> Kind<F, Kind<G, A>>.sequence_(ag: Applicative<G>): Kind<G, Unit> = traverse_(ag, ::identity)
 
   /**
    * Find the first element matching the predicate, if one exists.
@@ -158,7 +159,7 @@ interface Foldable<F> {
    *
    * Similar to foldM, but using a Monoid<B>.
    */
-  fun <G, A, B, TC> Kind<F, A>.foldMapM(tc: TC, f: (A) -> Kind<G, B>): Kind<G, B>
+  fun <G: KindType, A, B, TC> Kind<F, A>.foldMapM(tc: TC, f: (A) -> Kind<G, B>): Kind<G, B>
     where TC : Monad<G>, TC : Monoid<B> = tc.run {
     foldM(tc, tc.empty(), { b, a -> f(a).map { b.combine(it) } })
   }
@@ -170,7 +171,7 @@ interface Foldable<F> {
    * Certain structures are able to implement this in such a way that folds can be short-circuited (not traverse the
    * entirety of the structure), depending on the G result produced at a given step.
    */
-  fun <G, A, B> Kind<F, A>.foldM(M: Monad<G>, z: B, f: (B, A) -> Kind<G, B>): Kind<G, B> = M.run {
+  fun <G: KindType, A, B> Kind<F, A>.foldM(M: Monad<G>, z: B, f: (B, A) -> Kind<G, B>): Kind<G, B> = M.run {
     foldLeft(M.just(z), { gb, a -> gb.flatMap { f(it, a) } })
   }
 

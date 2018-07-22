@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.core.Left
@@ -20,7 +21,7 @@ fun <A> FluxKOf<A>.value(): Flux<A> =
     this.fix().flux
 
 @higherkind
-data class FluxK<A>(val flux: Flux<A>) : FluxKOf<A>, FluxKKindedJ<A> {
+data class FluxK<A>(val flux: Flux<A>) : FluxKOf<A>(), FluxKKindedJ<A> {
   fun <B> map(f: (A) -> B): FluxK<B> =
       flux.map(f).k()
 
@@ -47,7 +48,7 @@ data class FluxK<A>(val flux: Flux<A>) : FluxKOf<A>, FluxKKindedJ<A> {
     return Eval.defer { loop(this) }
   }
 
-  fun <G, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, FluxK<B>> = GA.run {
+  fun <G: KindType, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, FluxK<B>> = GA.run {
     foldRight(Eval.always { GA.just(Flux.empty<B>().k()) }) { a, eval ->
       f(a).map2Eval(eval) { Flux.concat(Flux.just<B>(it.a), it.b.flux).k() }
     }.value()
@@ -121,5 +122,5 @@ data class FluxK<A>(val flux: Flux<A>) : FluxKOf<A>, FluxKKindedJ<A> {
   }
 }
 
-inline fun <A, G> FluxKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, FluxK<A>> =
+inline fun <A, G: KindType> FluxKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, FluxK<A>> =
     fix().traverse(GA, ::identity)

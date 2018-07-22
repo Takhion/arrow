@@ -1,11 +1,12 @@
 package arrow.free
 
 import arrow.Kind
+import arrow.KindType
 import arrow.higherkind
 import arrow.typeclasses.Functor
 
 @higherkind
-abstract class Yoneda<F, A> : YonedaOf<F, A>, YonedaKindedJ<F, A> {
+abstract class Yoneda<F: KindType, A> : YonedaOf<F, A>(), YonedaKindedJ<F, A> {
 
   abstract operator fun <B> invoke(f: (A) -> B): Kind<F, B>
 
@@ -19,7 +20,7 @@ abstract class Yoneda<F, A> : YonedaOf<F, A>, YonedaKindedJ<F, A> {
   fun toCoyoneda(): Coyoneda<F, A, A> = Coyoneda(lower(), listOf({ a: Any? -> a }))
 
   companion object {
-    operator fun <U, A> invoke(fa: Kind<U, A>, FF: Functor<U>): Yoneda<U, A> =
+    operator fun <U: KindType, A> invoke(fa: Kind<U, A>, FF: Functor<U>): Yoneda<U, A> =
       object : Yoneda<U, A>(), Functor<U> by FF {
         override fun <B> invoke(f: (A) -> B): Kind<U, B> = fa.map(f)
       }

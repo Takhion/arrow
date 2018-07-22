@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.instance
 import arrow.typeclasses.*
@@ -102,11 +103,11 @@ interface IdFoldableInstance : Foldable<ForId> {
     fix().foldRight(lb, f)
 }
 
-fun <A, G, B> IdOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Id<B>> = GA.run {
+fun <A, G: KindType, B> IdOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Id<B>> = GA.run {
   f(value()).map { Id(it) }
 }
 
-fun <A, G> IdOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Id<A>> =
+fun <A, G: KindType> IdOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Id<A>> =
   idTraverse(GA, ::identity)
 
 @instance(Id::class)
@@ -114,7 +115,7 @@ interface IdTraverseInstance : Traverse<ForId> {
   override fun <A, B> Kind<ForId, A>.map(f: (A) -> B): Id<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForId, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Id<B>> =
+  override fun <G: KindType, A, B> Kind<ForId, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Id<B>> =
     idTraverse(AP, f)
 
   override fun <A, B> Kind<ForId, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -129,5 +130,5 @@ object IdContext : IdBimonadInstance, IdTraverseInstance {
     fix().map(f)
 }
 
-infix fun <L> ForId.Companion.extensions(f: IdContext.() -> L): L =
+infix fun <L> ForId.extensions(f: IdContext.() -> L): L =
   f(IdContext)

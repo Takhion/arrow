@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.effects.typeclasses.Async
@@ -61,7 +62,7 @@ interface ObservableKTraverseInstance : Traverse<ForObservableK> {
   override fun <A, B> Kind<ForObservableK, A>.map(f: (A) -> B): ObservableK<B> =
     fix().map(f)
 
-  override fun <G, A, B> ObservableKOf<A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ObservableK<B>> =
+  override fun <G: KindType, A, B> ObservableKOf<A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ObservableK<B>> =
     fix().traverse(AP, f)
 
   override fun <A, B> Kind<ForObservableK, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -125,5 +126,5 @@ object ObservableKContext : ObservableKEffectInstance, ObservableKTraverseInstan
     fix().map(f)
 }
 
-infix fun <A> ForObservableK.Companion.extensions(f: ObservableKContext.() -> A): A =
+infix fun <A> ForObservableK.extensions(f: ObservableKContext.() -> A): A =
   f(ObservableKContext)

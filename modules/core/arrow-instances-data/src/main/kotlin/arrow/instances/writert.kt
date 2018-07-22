@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.toT
 import arrow.data.WriterT
@@ -11,14 +12,14 @@ import arrow.instance
 import arrow.typeclasses.*
 
 @instance(WriterT::class)
-interface WriterTFunctorInstance<F, W> : Functor<WriterTPartialOf<F, W>> {
+interface WriterTFunctorInstance<F: KindType, W> : Functor<WriterTPartialOf<F, W>> {
   fun FF(): Functor<F>
 
   override fun <A, B> Kind<WriterTPartialOf<F, W>, A>.map(f: (A) -> B): WriterT<F, W, B> = fix().map(FF(), { f(it) })
 }
 
 @instance(WriterT::class)
-interface WriterTApplicativeInstance<F, W> : Applicative<WriterTPartialOf<F, W>>, WriterTFunctorInstance<F, W> {
+interface WriterTApplicativeInstance<F: KindType, W> : Applicative<WriterTPartialOf<F, W>>, WriterTFunctorInstance<F, W> {
 
   override fun FF(): Monad<F>
 
@@ -35,7 +36,7 @@ interface WriterTApplicativeInstance<F, W> : Applicative<WriterTPartialOf<F, W>>
 }
 
 @instance(WriterT::class)
-interface WriterTMonadInstance<F, W> : WriterTApplicativeInstance<F, W>, Monad<WriterTPartialOf<F, W>> {
+interface WriterTMonadInstance<F: KindType, W> : WriterTApplicativeInstance<F, W>, Monad<WriterTPartialOf<F, W>> {
 
   override fun <A, B> Kind<WriterTPartialOf<F, W>, A>.map(f: (A) -> B): WriterT<F, W, B> =
     fix().map(FF(), { f(it) })
@@ -51,7 +52,7 @@ interface WriterTMonadInstance<F, W> : WriterTApplicativeInstance<F, W>, Monad<W
 }
 
 @instance(WriterT::class)
-interface WriterTSemigroupKInstance<F, W> : SemigroupK<WriterTPartialOf<F, W>> {
+interface WriterTSemigroupKInstance<F: KindType, W> : SemigroupK<WriterTPartialOf<F, W>> {
 
   fun SS(): SemigroupK<F>
 
@@ -60,23 +61,23 @@ interface WriterTSemigroupKInstance<F, W> : SemigroupK<WriterTPartialOf<F, W>> {
 }
 
 @instance(WriterT::class)
-interface WriterTMonoidKInstance<F, W> : MonoidK<WriterTPartialOf<F, W>>, WriterTSemigroupKInstance<F, W> {
+interface WriterTMonoidKInstance<F: KindType, W> : MonoidK<WriterTPartialOf<F, W>>, WriterTSemigroupKInstance<F, W> {
 
   override fun SS(): MonoidK<F>
 
   override fun <A> empty(): WriterT<F, W, A> = WriterT(SS().empty())
 }
 
-class WriterTContext<F, W>(val MF: Monad<F>, val MW: Monoid<W>) : WriterTMonadInstance<F, W> {
+class WriterTContext<F: KindType, W>(val MF: Monad<F>, val MW: Monoid<W>) : WriterTMonadInstance<F, W> {
   override fun FF(): Monad<F> = MF
 
   override fun MM(): Monoid<W> = MW
 }
 
-class WriterTContextPartiallyApplied<F, W>(val MF: Monad<F>, val MW: Monoid<W>) {
+class WriterTContextPartiallyApplied<F: KindType, W>(val MF: Monad<F>, val MW: Monoid<W>) {
   infix fun <A> extensions(f: WriterTContext<F, W>.() -> A): A =
     f(WriterTContext(MF, MW))
 }
 
-fun <F, W> ForWriterT(MF: Monad<F>, MW: Monoid<W>): WriterTContextPartiallyApplied<F, W> =
+fun <F: KindType, W> ForWriterT(MF: Monad<F>, MW: Monoid<W>): WriterTContextPartiallyApplied<F, W> =
   WriterTContextPartiallyApplied(MF, MW)

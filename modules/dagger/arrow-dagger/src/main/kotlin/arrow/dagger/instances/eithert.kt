@@ -1,5 +1,6 @@
 package arrow.dagger.instances
 
+import arrow.KindType
 import arrow.data.EitherTPartialOf
 import arrow.instances.*
 import arrow.typeclasses.*
@@ -8,7 +9,7 @@ import dagger.Provides
 import javax.inject.Inject
 
 @Module
-abstract class EitherTInstances<F, L> {
+abstract class EitherTInstances<F: KindType, L> {
 
   @Provides
   fun eitherTFunctor(ev: DaggerEitherTFunctorInstance<F, L>): Functor<EitherTPartialOf<F, L>> = ev
@@ -36,35 +37,35 @@ abstract class EitherTInstances<F, L> {
 
 }
 
-class DaggerEitherTFunctorInstance<F, L> @Inject constructor(val FF: Functor<F>) : EitherTFunctorInstance<F, L> {
+class DaggerEitherTFunctorInstance<F: KindType, L> @Inject constructor(val FF: Functor<F>) : EitherTFunctorInstance<F, L> {
   override fun FF(): Functor<F> = FF
 }
 
-class DaggerEitherTApplicativeInstance<F, L> @Inject constructor(val MF: Monad<F>) : EitherTApplicativeInstance<F, L> {
+class DaggerEitherTApplicativeInstance<F: KindType, L> @Inject constructor(val MF: Monad<F>) : EitherTApplicativeInstance<F, L> {
   override fun MF(): Monad<F> = MF
   override fun FF(): Functor<F> = MF
 }
 
-class DaggerEitherTMonadInstance<F, L> @Inject constructor(val MF: Monad<F>) : EitherTMonadInstance<F, L> {
+class DaggerEitherTMonadInstance<F: KindType, L> @Inject constructor(val MF: Monad<F>) : EitherTMonadInstance<F, L> {
   override fun FF(): Functor<F> = MF
   override fun MF(): Monad<F> = MF
 }
 
-class DaggerEitherTMonadErrorInstance<F, L> @Inject constructor(val MF: MonadError<F, L>) : EitherTMonadErrorInstance<F, L> {
+class DaggerEitherTMonadErrorInstance<F: KindType, L> @Inject constructor(val MF: MonadError<F, L>) : EitherTMonadErrorInstance<F, L> {
   override fun FF(): Functor<F> = MF
   override fun MF(): Monad<F> = MF
 }
 
-class DaggerEitherTFoldableInstance<F, L> @Inject constructor(val FFF: Foldable<F>) : EitherTFoldableInstance<F, L> {
+class DaggerEitherTFoldableInstance<F: KindType, L> @Inject constructor(val FFF: Foldable<F>) : EitherTFoldableInstance<F, L> {
   override fun FFF(): Foldable<F> = FFF
 }
 
-class DaggerEitherTTraverseInstance<F, L> @Inject constructor(val FFF: Traverse<F>) : EitherTTraverseInstance<F, L> {
+class DaggerEitherTTraverseInstance<F: KindType, L> @Inject constructor(val FFF: Traverse<F>) : EitherTTraverseInstance<F, L> {
   override fun FF(): Functor<F> = FFF
   override fun FFF(): Foldable<F> = FFF
   override fun TF(): Traverse<F> = FFF
 }
 
-class DaggerEitherTSemigroupKInstance<F, L> @Inject constructor(val MF: Monad<F>) : EitherTSemigroupKInstance<F, L> {
+class DaggerEitherTSemigroupKInstance<F: KindType, L> @Inject constructor(val MF: Monad<F>) : EitherTSemigroupKInstance<F, L> {
   override fun MF(): Monad<F> = MF
 }

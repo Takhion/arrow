@@ -1,13 +1,14 @@
 package arrow.mtl.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.typeclasses.MonadContinuation
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 import kotlin.coroutines.experimental.RestrictsSuspension
 
 @RestrictsSuspension
-open class MonadFilterContinuation<F, A>(val MF: MonadFilter<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
+open class MonadFilterContinuation<F: KindType, A>(val MF: MonadFilter<F>, override val context: CoroutineContext = EmptyCoroutineContext) :
   MonadContinuation<F, A>(MF) {
 
   /**

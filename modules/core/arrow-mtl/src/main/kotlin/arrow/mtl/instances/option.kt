@@ -1,6 +1,7 @@
 package arrow.mtl.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.instance
 import arrow.mtl.typeclasses.MonadFilter
@@ -14,13 +15,13 @@ interface OptionTraverseFilterInstance : TraverseFilter<ForOption> {
   override fun <A> Kind<ForOption, A>.filter(f: (A) -> Boolean): Option<A> =
     fix().filter(f)
 
-  override fun <G, A, B> Kind<ForOption, A>.traverseFilter(AP: Applicative<G>, f: (A) -> Kind<G, Option<B>>): arrow.Kind<G, Option<B>> =
+  override fun <G: KindType, A, B> Kind<ForOption, A>.traverseFilter(AP: Applicative<G>, f: (A) -> Kind<G, Option<B>>): arrow.Kind<G, Option<B>> =
     optionTraverseFilter(AP, f)
 
   override fun <A, B> Kind<ForOption, A>.map(f: (A) -> B): Option<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForOption, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): arrow.Kind<G, Option<B>> =
+  override fun <G: KindType, A, B> Kind<ForOption, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): arrow.Kind<G, Option<B>> =
     optionTraverse(AP, f)
 
   override fun <A> Kind<ForOption, A>.exists(p: (A) -> Boolean): kotlin.Boolean =
@@ -77,5 +78,5 @@ object OptionMtlContext : OptionMonadFilterInstance, OptionTraverseFilterInstanc
     fix().map(f)
 }
 
-infix fun <A> ForOption.Companion.extensions(f: OptionMtlContext.() -> A): A =
+infix fun <A> ForOption.extensions(f: OptionMtlContext.() -> A): A =
   f(OptionMtlContext)

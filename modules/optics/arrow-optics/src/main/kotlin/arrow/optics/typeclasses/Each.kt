@@ -1,6 +1,7 @@
 package arrow.optics.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.optics.Fold
 import arrow.optics.Iso
 import arrow.optics.Lens
@@ -100,7 +101,7 @@ interface Each<S, A> {
      * @param T [Traverse] to create [Each] instance from
      * @return [Each] that provides [Traversal] created from [Traverse]
      */
-    fun <S, A> fromTraverse(T: Traverse<S>): Each<Kind<S, A>, A> = object : Each<Kind<S, A>, A> {
+    fun <S: KindType, A> fromTraverse(T: Traverse<S>): Each<Kind<S, A>, A> = object : Each<Kind<S, A>, A> {
       override fun each(): Traversal<Kind<S, A>, A> = Traversal.fromTraversable(T)
     }
   }

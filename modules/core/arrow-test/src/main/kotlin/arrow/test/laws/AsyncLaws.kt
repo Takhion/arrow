@@ -1,6 +1,7 @@
 package arrow.test.laws
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
@@ -14,7 +15,7 @@ import io.kotlintest.properties.forAll
 import kotlinx.coroutines.experimental.newSingleThreadContext
 
 object AsyncLaws {
-  inline fun <F> laws(AC: Async<F>, EQ: Eq<Kind<F, Int>>, EQ_EITHER: Eq<Kind<F, Either<Throwable, Int>>>, EQERR: Eq<Kind<F, Int>> = EQ): List<Law> =
+  inline fun <F: KindType> laws(AC: Async<F>, EQ: Eq<Kind<F, Int>>, EQ_EITHER: Eq<Kind<F, Either<Throwable, Int>>>, EQERR: Eq<Kind<F, Int>> = EQ): List<Law> =
     MonadSuspendLaws.laws(AC, EQERR, EQ_EITHER, EQ) + listOf(
       Law("Async Laws: success equivalence", { AC.asyncSuccess(EQ) }),
       Law("Async Laws: error equivalence", { AC.asyncError(EQERR) }),
@@ -22,17 +23,17 @@ object AsyncLaws {
       Law("Async Laws: continueOn on comprehensions", { AC.continueOnComprehension(EQ) })
     )
 
-  fun <F> Async<F>.asyncSuccess(EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Async<F>.asyncSuccess(EQ: Eq<Kind<F, Int>>): Unit =
     forAll(Gen.int(), { num: Int ->
       async { ff: (Either<Throwable, Int>) -> Unit -> ff(Right(num)) }.equalUnderTheLaw(just<Int>(num), EQ)
     })
 
-  fun <F> Async<F>.asyncError(EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Async<F>.asyncError(EQ: Eq<Kind<F, Int>>): Unit =
     forAll(genThrowable(), { e: Throwable ->
       async { ff: (Either<Throwable, Int>) -> Unit -> ff(Left(e)) }.equalUnderTheLaw(raiseError<Int>(e), EQ)
     })
 
-  fun <F> Async<F>.continueOn(EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Async<F>.continueOn(EQ: Eq<Kind<F, Int>>): Unit =
     forFew(5, genIntSmall(), genIntSmall(), { threadId1: Int, threadId2: Int ->
       Unit.just()
         .continueOn(newSingleThreadContext(threadId1.toString()))
@@ -42,7 +43,7 @@ object AsyncLaws {
         .equalUnderTheLaw(just(threadId1 + threadId2), EQ)
     })
 
-  fun <F> Async<F>.continueOnComprehension(EQ: Eq<Kind<F, Int>>): Unit =
+  fun <F: KindType> Async<F>.continueOnComprehension(EQ: Eq<Kind<F, Int>>): Unit =
     forFew(5, genIntSmall(), genIntSmall(), { threadId1: Int, threadId2: Int ->
       binding {
         continueOn(newSingleThreadContext(threadId1.toString()))

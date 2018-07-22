@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.core.Tuple2
@@ -95,7 +96,7 @@ interface SequenceKTraverseInstance : Traverse<ForSequenceK> {
   override fun <A, B> Kind<ForSequenceK, A>.map(f: (A) -> B): SequenceK<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForSequenceK, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, SequenceK<B>> =
+  override fun <G: KindType, A, B> Kind<ForSequenceK, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, SequenceK<B>> =
     fix().traverse(AP, f)
 
   override fun <A, B> Kind<ForSequenceK, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -125,5 +126,5 @@ object SequenceKContext : SequenceKMonadInstance, SequenceKTraverseInstance, Seq
     fix().map(f)
 }
 
-infix fun <A> ForSequenceK.Companion.extensions(f: SequenceKContext.() -> A): A =
+infix fun <A> ForSequenceK.extensions(f: SequenceKContext.() -> A): A =
   f(SequenceKContext)

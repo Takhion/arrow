@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.mtl.instances.ForOptionT
 import arrow.test.UnitSpec
@@ -14,11 +15,11 @@ import org.junit.runner.RunWith
 @RunWith(KTestJUnitRunner::class)
 class OptionTTest : UnitSpec() {
 
-  fun <A> EQ(): Eq<Kind<OptionTPartialOf<A>, Int>> = Eq { a, b ->
+  fun <A: KindType> EQ(): Eq<Kind<OptionTPartialOf<A>, Int>> = Eq { a, b ->
     a.value() == b.value()
   }
 
-  fun <A> EQ_NESTED(): Eq<Kind<OptionTPartialOf<A>, Kind<OptionTPartialOf<A>, Int>>> = Eq { a, b ->
+  fun <A: KindType> EQ_NESTED(): Eq<Kind<OptionTPartialOf<A>, Kind<OptionTPartialOf<A>, Int>>> = Eq { a, b ->
     a.value() == b.value()
   }
 

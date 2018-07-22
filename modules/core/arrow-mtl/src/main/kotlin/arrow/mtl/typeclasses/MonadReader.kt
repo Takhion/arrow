@@ -1,9 +1,10 @@
 package arrow.mtl.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.typeclasses.Monad
 
-interface MonadReader<F, D> : Monad<F> {
+interface MonadReader<F: KindType, D> : Monad<F> {
   /** Get the environment */
   fun ask(): Kind<F, D>
 

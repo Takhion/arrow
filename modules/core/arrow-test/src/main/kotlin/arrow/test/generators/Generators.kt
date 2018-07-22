@@ -1,6 +1,7 @@
 package arrow.test.generators
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.*
 import arrow.recursion.Algebra
@@ -11,7 +12,7 @@ import arrow.typeclasses.Applicative
 import io.kotlintest.properties.Gen
 import java.util.concurrent.TimeUnit
 
-fun <F, A> genApplicative(valueGen: Gen<A>, AP: Applicative<F>): Gen<Kind<F, A>> =
+fun <F: KindType, A> genApplicative(valueGen: Gen<A>, AP: Applicative<F>): Gen<Kind<F, A>> =
   object : Gen<Kind<F, A>> {
     override fun generate(): Kind<F, A> =
       AP.just(valueGen.generate())
@@ -38,13 +39,13 @@ fun genThrowable(): Gen<Throwable> = object : Gen<Throwable> {
     Gen.oneOf(listOf(RuntimeException(), NoSuchElementException(), IllegalArgumentException())).generate()
 }
 
-inline fun <F, A> genConstructor(valueGen: Gen<A>, crossinline cf: (A) -> Kind<F, A>): Gen<Kind<F, A>> =
+inline fun <F: KindType, A> genConstructor(valueGen: Gen<A>, crossinline cf: (A) -> Kind<F, A>): Gen<Kind<F, A>> =
   object : Gen<Kind<F, A>> {
     override fun generate(): Kind<F, A> =
       cf(valueGen.generate())
   }
 
-inline fun <F, A, B> genConstructor2(valueGen: Gen<A>, crossinline ff: (A) -> Kind<F, (A) -> B>): Gen<Kind<F, (A) -> B>> =
+inline fun <F: KindType, A, B> genConstructor2(valueGen: Gen<A>, crossinline ff: (A) -> Kind<F, (A) -> B>): Gen<Kind<F, (A) -> B>> =
   object : Gen<Kind<F, (A) -> B>> {
     override fun generate(): Kind<F, (A) -> B> =
       ff(valueGen.generate())
@@ -185,8 +186,8 @@ fun fromGNatAlgebra() = Algebra<NatPattern, Eval<Int>> {
   it.fix().fold({ Eval.Zero }, { it.map { it + 1 } })
 }
 
-inline fun <reified T> Corecursive<T>.toGNat(i: Int): GNat<T> =
+inline fun <reified T: KindType> Corecursive<T>.toGNat(i: Int): GNat<T> =
   Option.functor().ana(i, toGNatCoalgebra())
 
-inline fun <reified T> Recursive<T>.toInt(i: GNat<T>): Int =
+inline fun <reified T: KindType> Recursive<T>.toInt(i: GNat<T>): Int =
   Option.functor().cata(i, fromGNatAlgebra())

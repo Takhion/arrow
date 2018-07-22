@@ -11,7 +11,7 @@ import arrow.higherkind
 import kotlin.coroutines.experimental.CoroutineContext
 
 @higherkind
-sealed class IO<out A> : IOOf<A> {
+sealed class IO<out A> : IOOf<A>() {
 
   companion object {
 

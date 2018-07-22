@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -14,20 +15,20 @@ import arrow.typeclasses.Monad
  * It may also be said that [OptionT] is a monad transformer for [Option].
  */
 @higherkind
-data class OptionT<F, A>(val value: Kind<F, Option<A>>) : OptionTOf<F, A>, OptionTKindedJ<F, A> {
+data class OptionT<F: KindType, A>(val value: Kind<F, Option<A>>) : OptionTOf<F, A>(), OptionTKindedJ<F, A> {
 
   companion object {
 
-    operator fun <F, A> invoke(value: Kind<F, Option<A>>): OptionT<F, A> = OptionT(value)
+    operator fun <F: KindType, A> invoke(value: Kind<F, Option<A>>): OptionT<F, A> = OptionT(value)
 
-    fun <F, A> just(AF: Applicative<F>, a: A): OptionT<F, A> = OptionT(AF.just(Some(a)))
+    fun <F: KindType, A> just(AF: Applicative<F>, a: A): OptionT<F, A> = OptionT(AF.just(Some(a)))
 
-    fun <F> none(AF: Applicative<F>): OptionT<F, Nothing> = OptionT(AF.just(None))
+    fun <F: KindType> none(AF: Applicative<F>): OptionT<F, Nothing> = OptionT(AF.just(None))
 
-    fun <F, A> fromOption(AF: Applicative<F>, value: Option<A>): OptionT<F, A> =
+    fun <F: KindType, A> fromOption(AF: Applicative<F>, value: Option<A>): OptionT<F, A> =
       OptionT(AF.just(value))
 
-    fun <F, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> OptionTOf<F, Either<A, B>>): OptionT<F, B> = MF.run {
+    fun <F: KindType, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> OptionTOf<F, Either<A, B>>): OptionT<F, B> = MF.run {
       OptionT(tailRecM(a, {
         f(it).fix().value.map({
           it.fold({
@@ -111,8 +112,8 @@ data class OptionT<F, A>(val value: Kind<F, Option<A>>) : OptionTOf<F, A>, Optio
     EitherT(cata(FF, { Left(default()) }, { Right(it) }))
 }
 
-fun <F, A, B> OptionTOf<F, A>.mapFilter(FF: Functor<F>, f: (A) -> Option<B>): OptionT<F, B> = FF.run {
+fun <F: KindType, A, B> OptionTOf<F, A>.mapFilter(FF: Functor<F>, f: (A) -> Option<B>): OptionT<F, B> = FF.run {
   OptionT(fix().value.map({ it.flatMap(f) }))
 }
 
-fun <F, A> OptionTOf<F, A>.value(): Kind<F, Option<A>> = this.fix().value
+fun <F: KindType, A> OptionTOf<F, A>.value(): Kind<F, Option<A>> = this.fix().value

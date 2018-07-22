@@ -1,3 +1,5 @@
 package arrow.typeclasses
 
-interface Alternative<F> : Applicative<F>, MonoidK<F>
+import arrow.KindType
+
+interface Alternative<F: KindType> : Applicative<F>, MonoidK<F>

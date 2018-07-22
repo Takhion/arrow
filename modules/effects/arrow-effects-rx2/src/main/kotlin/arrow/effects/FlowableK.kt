@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.effects.CoroutineContextScheduler.asScheduler
 import arrow.effects.typeclasses.Proc
@@ -16,7 +17,7 @@ fun <A> Flowable<A>.k(): FlowableK<A> = FlowableK(this)
 fun <A> FlowableKOf<A>.value(): Flowable<A> = this.fix().flowable
 
 @higherkind
-data class FlowableK<A>(val flowable: Flowable<A>) : FlowableKOf<A>, FlowableKKindedJ<A> {
+data class FlowableK<A>(val flowable: Flowable<A>) : FlowableKOf<A>(), FlowableKKindedJ<A> {
 
   fun <B> map(f: (A) -> B): FlowableK<B> =
     flowable.map(f).k()
@@ -44,7 +45,7 @@ data class FlowableK<A>(val flowable: Flowable<A>) : FlowableKOf<A>, FlowableKKi
     return Eval.defer { loop(this) }
   }
 
-  fun <G, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, FlowableK<B>> = GA.run {
+  fun <G: KindType, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, FlowableK<B>> = GA.run {
     foldRight(Eval.always { just(Flowable.empty<B>().k()) }) { a, eval ->
       f(a).map2Eval(eval) { Flowable.concat(Flowable.just<B>(it.a), it.b.flowable).k() }
     }.value()
@@ -173,5 +174,5 @@ data class FlowableK<A>(val flowable: Flowable<A>) : FlowableKOf<A>, FlowableKKi
   }
 }
 
-inline fun <A, G> FlowableKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, FlowableK<A>> =
+inline fun <A, G: KindType> FlowableKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, FlowableK<A>> =
   fix().traverse(GA, ::identity)

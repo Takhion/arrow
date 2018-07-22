@@ -29,7 +29,7 @@ import arrow.higherkind
  * overflows.
  */
 @higherkind
-sealed class Eval<out A> : EvalOf<A> {
+sealed class Eval<out A> : EvalOf<A>() {
 
   companion object {
 

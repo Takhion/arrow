@@ -1,6 +1,7 @@
 package arrow.effects.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Tuple2
 import arrow.core.toT
@@ -9,7 +10,7 @@ import arrow.typeclasses.MonadError
 import kotlin.coroutines.experimental.startCoroutine
 
 /** The context required to defer evaluating a safe computation. **/
-interface MonadDefer<F> : MonadError<F, Throwable> {
+interface MonadDefer<F: KindType> : MonadError<F, Throwable> {
   fun <A> defer(fa: () -> Kind<F, A>): Kind<F, A>
 
   operator fun <A> invoke(fa: () -> A): Kind<F, A> =
@@ -38,7 +39,7 @@ interface MonadDefer<F> : MonadError<F, Throwable> {
  * This operation is cancellable by calling invoke on the [Disposable] return.
  * If [Disposable.invoke] is called the binding result will become a lifted [BindingCancellationException].
  */
-fun <F, B> MonadDefer<F>.bindingCancellable(c: suspend MonadDeferCancellableContinuation<F, *>.() -> B): Tuple2<Kind<F, B>, Disposable> {
+fun <F: KindType, B> MonadDefer<F>.bindingCancellable(c: suspend MonadDeferCancellableContinuation<F, *>.() -> B): Tuple2<Kind<F, B>, Disposable> {
   val continuation = MonadDeferCancellableContinuation<F, B>(this)
   val wrapReturn: suspend MonadDeferCancellableContinuation<F, *>.() -> Kind<F, B> = { just(c()) }
   wrapReturn.startCoroutine(continuation, continuation)

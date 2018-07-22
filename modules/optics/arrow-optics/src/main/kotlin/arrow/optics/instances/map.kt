@@ -1,6 +1,7 @@
 package arrow.optics.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.*
 import arrow.optics.*
@@ -44,8 +45,8 @@ fun <K, V> MapInstances.traversal(): Traversal<Map<K, V>, V> = MapTraversal()
 /**
  * [Traversal] for [Map] that focuses in each [V] of the source [Map].
  */
-interface MapTraversal<K, V> : Traversal<Map<K, V>, V> {
-  override fun <F> modifyF(FA: Applicative<F>, s: Map<K, V>, f: (V) -> Kind<F, V>): Kind<F, Map<K, V>> = FA.run {
+open class MapTraversal<K, V> : Traversal<Map<K, V>, V>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: Map<K, V>, f: (V) -> Kind<F, V>): Kind<F, Map<K, V>> = FA.run {
     s.k().traverse(FA, f).map { it.map }
   }
 
@@ -55,7 +56,7 @@ interface MapTraversal<K, V> : Traversal<Map<K, V>, V> {
      *
      * @return [Index] instance for [String]
      */
-    operator fun <K, V> invoke(): MapTraversal<K, V> = object : MapTraversal<K, V> {}
+    operator fun <K, V> invoke(): MapTraversal<K, V> = object : MapTraversal<K, V>() {}
   }
 }
 
@@ -83,8 +84,8 @@ fun <K, V> MapInstances.filterIndex(): FilterIndex<Map<K, V>, K, V> = MapFilterI
  * [FilterIndex] instance definition for [Map].
  */
 interface MapFilterIndexInstance<K, V> : FilterIndex<Map<K, V>, K, V> {
-  override fun filter(p: Predicate<K>) = object : Traversal<Map<K, V>, V> {
-    override fun <F> modifyF(FA: Applicative<F>, s: Map<K, V>, f: (V) -> Kind<F, V>): Kind<F, Map<K, V>> = FA.run {
+  override fun filter(p: Predicate<K>) = object : Traversal<Map<K, V>, V>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: Map<K, V>, f: (V) -> Kind<F, V>): Kind<F, Map<K, V>> = FA.run {
       s.toList().k().traverse(FA, { (k, v) ->
         (if (p(k)) f(v) else just(v)).map {
           k to it

@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.ListK
 import arrow.data.monoid
@@ -19,12 +20,12 @@ import arrow.typeclasses.Monoid
  * @param A the target of a [Fold]
  */
 @higherkind
-interface Fold<S, A> : FoldOf<S, A> {
+abstract class Fold<S, A> : FoldOf<S, A>() {
 
   /**
    * Map each target to a type R and use a Monoid to fold the results
    */
-  fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R
+  abstract fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R
 
   companion object {
 
@@ -33,14 +34,14 @@ interface Fold<S, A> : FoldOf<S, A> {
     /**
      * [Fold] that takes either [S] or [S] and strips the choice of [S].
      */
-    fun <S> codiagonal() = object : Fold<Either<S, S>, S> {
+    fun <S> codiagonal() = object : Fold<Either<S, S>, S>() {
       override fun <R> foldMap(M: Monoid<R>, s: Either<S, S>, f: (S) -> R): R = s.fold(f, f)
     }
 
     /**
      * Creates a [Fold] based on a predicate of the source [S]
      */
-    fun <S> select(p: (S) -> Boolean): Fold<S, S> = object : Fold<S, S> {
+    fun <S> select(p: (S) -> Boolean): Fold<S, S> = object : Fold<S, S>() {
       override fun <R> foldMap(M: Monoid<R>, s: S, f: (S) -> R): R = if (p(s)) f(s) else M.empty()
     }
 
@@ -52,7 +53,7 @@ interface Fold<S, A> : FoldOf<S, A> {
     /**
      * Create a [Fold] from a [arrow.Foldable]
      */
-    fun <F, S> fromFoldable(foldable: Foldable<F>) = object : Fold<Kind<F, S>, S> {
+    fun <F: KindType, S> fromFoldable(foldable: Foldable<F>) = object : Fold<Kind<F, S>, S>() {
       override fun <R> foldMap(M: Monoid<R>, s: Kind<F, S>, f: (S) -> R): R = foldable.run { s.foldMap(M, f) }
     }
 
@@ -106,7 +107,7 @@ interface Fold<S, A> : FoldOf<S, A> {
   /**
    * Join two [Fold] with the same target
    */
-  infix fun <C> choice(other: Fold<C, A>): Fold<Either<S, C>, A> = object : Fold<Either<S, C>, A> {
+  infix fun <C> choice(other: Fold<C, A>): Fold<Either<S, C>, A> = object : Fold<Either<S, C>, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: Either<S, C>, f: (A) -> R): R =
       s.fold({ ac -> this@Fold.foldMap(M, ac, f) }, { c -> other.foldMap(M, c, f) })
   }
@@ -114,7 +115,7 @@ interface Fold<S, A> : FoldOf<S, A> {
   /**
    * Create a sum of the [Fold] and a type [C]
    */
-  fun <C> left(): Fold<Either<S, C>, Either<A, C>> = object : Fold<Either<S, C>, Either<A, C>> {
+  fun <C> left(): Fold<Either<S, C>, Either<A, C>> = object : Fold<Either<S, C>, Either<A, C>>() {
     override fun <R> foldMap(M: Monoid<R>, s: Either<S, C>, f: (Either<A, C>) -> R): R =
       s.fold({ a1: S -> this@Fold.foldMap(M, a1, { b -> f(Either.Left(b)) }) }, { c -> f(Either.Right(c)) })
   }
@@ -122,7 +123,7 @@ interface Fold<S, A> : FoldOf<S, A> {
   /**
    * Create a sum of a type [C] and the [Fold]
    */
-  fun <C> right(): Fold<Either<C, S>, Either<C, A>> = object : Fold<Either<C, S>, Either<C, A>> {
+  fun <C> right(): Fold<Either<C, S>, Either<C, A>> = object : Fold<Either<C, S>, Either<C, A>>() {
     override fun <R> foldMap(M: Monoid<R>, s: Either<C, S>, f: (Either<C, A>) -> R): R =
       s.fold({ c -> f(Either.Left(c)) }, { a1 -> this@Fold.foldMap(M, a1, { b -> f(Either.Right(b)) }) })
   }
@@ -130,7 +131,7 @@ interface Fold<S, A> : FoldOf<S, A> {
   /**
    * Compose a [Fold] with a [Fold]
    */
-  infix fun <C> compose(other: Fold<A, C>): Fold<S, C> = object : Fold<S, C> {
+  infix fun <C> compose(other: Fold<A, C>): Fold<S, C> = object : Fold<S, C>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (C) -> R): R =
       this@Fold.foldMap(M, s, { c -> other.foldMap(M, c, f) })
   }

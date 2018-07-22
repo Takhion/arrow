@@ -1,3 +1,5 @@
 package arrow.typeclasses
 
-interface Bimonad<F> : Monad<F>, Comonad<F>
+import arrow.KindType
+
+interface Bimonad<F: KindType> : Monad<F>, Comonad<F>

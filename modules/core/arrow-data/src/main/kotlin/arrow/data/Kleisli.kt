@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Tuple2
 import arrow.core.identity
@@ -24,7 +25,7 @@ typealias KleisliFun<F, D, A> = (D) -> Kind<F, A>
  * @property run the arrow from [D] to `Kind<F, A>`.
  */
 @higherkind
-class Kleisli<F, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>, KleisliKindedJ<F, D, A> {
+class Kleisli<F: KindType, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>(), KleisliKindedJ<F, D, A> {
 
   /**
    * Apply a function `(A) -> B` that operates within the [Kleisli] context.
@@ -118,7 +119,7 @@ class Kleisli<F, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>, Kleis
      *
      * @param run the arrow from [D] to a monadic value `Kind<F, A>`
      */
-    operator fun <F, D, A> invoke(run: KleisliFun<F, D, A>): Kleisli<F, D, A> = Kleisli(run)
+    operator fun <F: KindType, D, A> invoke(run: KleisliFun<F, D, A>): Kleisli<F, D, A> = Kleisli(run)
 
     /**
      * Tail recursive function that keeps calling [f] until [arrow.Either.Right] is returned.
@@ -127,7 +128,7 @@ class Kleisli<F, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>, Kleis
      * @param f function that is called recusively until [arrow.Either.Right] is returned.
      * @param MF [Monad] for the context [F].
      */
-    fun <F, D, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> KleisliOf<F, D, Either<A, B>>): Kleisli<F, D, B> =
+    fun <F: KindType, D, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> KleisliOf<F, D, Either<A, B>>): Kleisli<F, D, B> =
       Kleisli { b -> MF.tailRecM(a, { f(it).fix().run(b) }) }
 
     /**
@@ -136,20 +137,20 @@ class Kleisli<F, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>, Kleis
      * @param x value of [A].
      * @param AF [Applicative] for context [F].
      */
-    inline fun <F, D, A> just(AF: Applicative<F>, x: A): Kleisli<F, D, A> = Kleisli { _ -> AF.just(x) }
+    inline fun <F: KindType, D, A> just(AF: Applicative<F>, x: A): Kleisli<F, D, A> = Kleisli { _ -> AF.just(x) }
 
     /**
      * Ask an arrow from [D] to [D].
      *
      * @param AF [Applicative] for context [F].
      */
-    inline fun <F, D> ask(AF: Applicative<F>): Kleisli<F, D, D> = Kleisli { AF.just(it) }
+    inline fun <F: KindType, D> ask(AF: Applicative<F>): Kleisli<F, D, D> = Kleisli { AF.just(it) }
 
     /**
      * Raise an error [E].
      * @param ME [MonadError] for context [F].
      */
-    fun <F, D, E, A> raiseError(ME: MonadError<F, E>, e: E): Kleisli<F, D, A> = Kleisli { ME.raiseError(e) }
+    fun <F: KindType, D, E, A> raiseError(ME: MonadError<F, E>, e: E): Kleisli<F, D, A> = Kleisli { ME.raiseError(e) }
 
   }
 }
@@ -159,14 +160,14 @@ class Kleisli<F, D, A>(val run: KleisliFun<F, D, A>) : KleisliOf<F, D, A>, Kleis
  *
  * @param MF [Monad] for the context [F].
  */
-fun <F, D, A> KleisliOf<F, D, Kleisli<F, D, A>>.flatten(MF: Monad<F>): Kleisli<F, D, A> = fix().flatMap(MF, ::identity)
+fun <F: KindType, D, A> KleisliOf<F, D, Kleisli<F, D, A>>.flatten(MF: Monad<F>): Kleisli<F, D, A> = fix().flatMap(MF, ::identity)
 
 /**
  * Syntax for constructing a [Kleisli]
  *
  * @receiver [KleisliFun] a function that represents computation dependent on [D] with the result in context [F].
  */
-fun <F, D, A> KleisliFun<F, D, A>.kleisli(): Kleisli<F, D, A> = Kleisli(this)
+fun <F: KindType, D, A> KleisliFun<F, D, A>.kleisli(): Kleisli<F, D, A> = Kleisli(this)
 
 /**
  * Alias that represents a computation that has a dependency on [D].
@@ -210,4 +211,4 @@ typealias ReaderT<F, D, A> = Kleisli<F, D, A>
  *
  * @receiver [ReaderTFun] a function that represents computation dependent on [D] with the result in context [F].
  */
-fun <F, D, A> ReaderTFun<F, D, A>.readerT(): ReaderT<F, D, A> = ReaderT(this)
+fun <F: KindType, D, A> ReaderTFun<F, D, A>.readerT(): ReaderT<F, D, A> = ReaderT(this)

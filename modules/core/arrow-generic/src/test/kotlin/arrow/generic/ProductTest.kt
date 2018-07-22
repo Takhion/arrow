@@ -1,6 +1,7 @@
 package arrow.generic
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.product
 import arrow.test.UnitSpec
@@ -34,10 +35,10 @@ fun tuple3Gen(): Gen<Tuple3<String, Int, Option<Person>>> = with(Gen) {
   }
 }
 
-inline fun <reified F, A> Gen<A>.generateIn(applicative: Applicative<F>): Gen<Kind<F, A>> =
+inline fun <reified F: KindType, A> Gen<A>.generateIn(applicative: Applicative<F>): Gen<Kind<F, A>> =
   Gen.create { applicative.just(this.generate()) }
 
-inline fun <reified F> Applicative<F>.testPersonApplicative() {
+inline fun <reified F: KindType> Applicative<F>.testPersonApplicative() {
   forAll(Gen.string(), Gen.int(), personGen(), { a, b, c ->
     mapToPerson(just(a), just(b), just(c.some())) == just(Person(a, b, c.some()))
   })

@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Eval
 import arrow.core.fix
 import arrow.data.Coproduct
@@ -11,7 +12,7 @@ import arrow.instance
 import arrow.typeclasses.*
 
 @instance(Coproduct::class)
-interface CoproductFunctorInstance<F, G> : Functor<CoproductPartialOf<F, G>> {
+interface CoproductFunctorInstance<F: KindType, G: KindType> : Functor<CoproductPartialOf<F, G>> {
 
   fun FF(): Functor<F>
 
@@ -21,7 +22,7 @@ interface CoproductFunctorInstance<F, G> : Functor<CoproductPartialOf<F, G>> {
 }
 
 @instance(Coproduct::class)
-interface CoproductComonadInstance<F, G> : Comonad<CoproductPartialOf<F, G>> {
+interface CoproductComonadInstance<F: KindType, G: KindType> : Comonad<CoproductPartialOf<F, G>> {
 
   fun CF(): Comonad<F>
 
@@ -36,7 +37,7 @@ interface CoproductComonadInstance<F, G> : Comonad<CoproductPartialOf<F, G>> {
 }
 
 @instance(Coproduct::class)
-interface CoproductFoldableInstance<F, G> : Foldable<CoproductPartialOf<F, G>> {
+interface CoproductFoldableInstance<F: KindType, G: KindType> : Foldable<CoproductPartialOf<F, G>> {
 
   fun FF(): Foldable<F>
 
@@ -51,13 +52,13 @@ interface CoproductFoldableInstance<F, G> : Foldable<CoproductPartialOf<F, G>> {
 }
 
 @instance(Coproduct::class)
-interface CoproductTraverseInstance<F, G> : Traverse<CoproductPartialOf<F, G>> {
+interface CoproductTraverseInstance<F: KindType, G: KindType> : Traverse<CoproductPartialOf<F, G>> {
 
   fun TF(): Traverse<F>
 
   fun TG(): Traverse<G>
 
-  override fun <H, A, B> CoproductOf<F, G, A>.traverse(AP: Applicative<H>, f: (A) -> Kind<H, B>): Kind<H, Coproduct<F, G, B>> =
+  override fun <H: KindType, A, B> CoproductOf<F, G, A>.traverse(AP: Applicative<H>, f: (A) -> Kind<H, B>): Kind<H, Coproduct<F, G, B>> =
     fix().traverse(AP, TF(), TG(), f)
 
   override fun <A, B> Kind<CoproductPartialOf<F, G>, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -67,15 +68,15 @@ interface CoproductTraverseInstance<F, G> : Traverse<CoproductPartialOf<F, G>> {
     fix().foldRight(lb, f, TF(), TG())
 }
 
-class CoproductContext<F, G>(val TF: Traverse<F>, val TG: Traverse<G>) : CoproductTraverseInstance<F, G> {
+class CoproductContext<F: KindType, G: KindType>(val TF: Traverse<F>, val TG: Traverse<G>) : CoproductTraverseInstance<F, G> {
   override fun TF(): Traverse<F> = TF
   override fun TG(): Traverse<G> = TG
 }
 
-class CoproductContextPartiallyApplied<F, G>(val TF: Traverse<F>, val TG: Traverse<G>) {
+class CoproductContextPartiallyApplied<F: KindType, G: KindType>(val TF: Traverse<F>, val TG: Traverse<G>) {
   infix fun <A> extensions(f: CoproductContext<F, G>.() -> A): A =
     f(CoproductContext(TF, TG))
 }
 
-fun <F, G> ForCoproduct(TF: Traverse<F>, TG: Traverse<G>): CoproductContextPartiallyApplied<F, G> =
+fun <F: KindType, G: KindType> ForCoproduct(TF: Traverse<F>, TG: Traverse<G>): CoproductContextPartiallyApplied<F, G> =
   CoproductContextPartiallyApplied(TF, TG)

@@ -1,6 +1,7 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 
 /**
  * MonoidK is a universal monoid which operates on kinds.
@@ -8,7 +9,7 @@ import arrow.Kind
  * MonoidK<F> allows two F<A> values to be combined, for any A. It also means that for any A, there
  * is an "empty" F<A> value.
  */
-interface MonoidK<F> : SemigroupK<F> {
+interface MonoidK<F: KindType> : SemigroupK<F> {
 
   /**
    * Given a type A, create an "empty" F<A> value.

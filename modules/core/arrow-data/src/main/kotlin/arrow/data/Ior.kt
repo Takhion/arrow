@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -28,7 +29,7 @@ typealias IorNel<A, B> = Ior<Nel<A>, B>
  * The isomorphic Either form can be accessed via the [unwrap] method.
  */
 @higherkind
-sealed class Ior<out A, out B> : IorOf<A, B> {
+sealed class Ior<out A, out B> : IorOf<A, B>() {
 
   /**
    * Returns `true` if this is a [Right], `false` otherwise.
@@ -144,7 +145,7 @@ sealed class Ior<out A, out B> : IorOf<A, B> {
   fun <C> foldRight(lc: Eval<C>, f: (B, Eval<C>) -> Eval<C>): Eval<C> =
     fold({ lc }, { f(it, lc) }, { _, b -> f(b, lc) })
 
-  fun <G, C> traverse(GA: Applicative<G>, f: (B) -> Kind<G, C>): Kind<G, Ior<A, C>> = GA.run {
+  fun <G: KindType, C> traverse(GA: Applicative<G>, f: (B) -> Kind<G, C>): Kind<G, Ior<A, C>> = GA.run {
     fold({ just(Left(it)) }, { f(it).map({ Right<A, C>(it) }) }, { _, b -> f(b).map({ Right<A, C>(it) }) })
   }
 
@@ -331,7 +332,7 @@ fun <A, B, D> Ior<A, B>.ap(SG: Semigroup<A>, ff: IorOf<A, (B) -> D>): Ior<A, D> 
 
 inline fun <A, B> Ior<A, B>.getOrElse(crossinline default: () -> B): B = fold({ default() }, ::identity, { _, b -> b })
 
-inline fun <A, B, G> IorOf<A, Kind<G, B>>.sequence(GA: Applicative<G>): Kind<G, Ior<A, B>> =
+inline fun <A, B, G: KindType> IorOf<A, Kind<G, B>>.sequence(GA: Applicative<G>): Kind<G, Ior<A, B>> =
   fix().traverse(GA, ::identity)
 
 fun <A, B> Pair<A, B>.bothIor(): Ior<A, B> = Ior.Both(this.first, this.second)

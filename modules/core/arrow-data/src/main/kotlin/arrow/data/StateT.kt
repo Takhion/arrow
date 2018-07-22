@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -24,7 +25,7 @@ typealias StateTFunOf<F, S, A> = Kind<F, StateTFun<F, S, A>>
  * @param MF [Monad] for the context [F]
  * @param s initial state to run stateful computation
  */
-fun <F, S, A> StateTOf<F, S, A>.runM(MF: Monad<F>, initial: S): Kind<F, Tuple2<S, A>> = fix().run(MF, initial)
+fun <F: KindType, S, A> StateTOf<F, S, A>.runM(MF: Monad<F>, initial: S): Kind<F, Tuple2<S, A>> = fix().run(MF, initial)
 
 /**
  * `StateT<F, S, A>` is a stateful computation within a context `F` yielding
@@ -36,13 +37,13 @@ fun <F, S, A> StateTOf<F, S, A>.runM(MF: Monad<F>, initial: S): Kind<F, Tuple2<S
  * @param runF the stateful computation that is wrapped and managed by `StateT`
  */
 @higherkind
-class StateT<F, S, A>(
+class StateT<F: KindType, S, A>(
   val runF: StateTFunOf<F, S, A>
-) : StateTOf<F, S, A>, StateTKindedJ<F, S, A> {
+) : StateTOf<F, S, A>(), StateTKindedJ<F, S, A> {
 
   companion object {
 
-    inline fun <F, S, T> just(MF: Monad<F>, t: T): StateT<F, S, T> =
+    inline fun <F: KindType, S, T> just(MF: Monad<F>, t: T): StateT<F, S, T> =
       StateT(MF) { s -> MF.just(s toT t) }
 
     /**
@@ -51,7 +52,7 @@ class StateT<F, S, A>(
      * @param MF [Monad] for the context [F].
      * @param run the stateful function to wrap with [StateT].
      */
-    inline operator fun <F, S, A> invoke(MF: Monad<F>, noinline run: StateTFun<F, S, A>): StateT<F, S, A> = MF.run {
+    inline operator fun <F: KindType, S, A> invoke(MF: Monad<F>, noinline run: StateTFun<F, S, A>): StateT<F, S, A> = MF.run {
       StateT(just(run))
     }
 
@@ -60,7 +61,7 @@ class StateT<F, S, A>(
      *
      * @param runF the function to wrap within [StateT].
      */
-    fun <F, S, A> invokeF(runF: StateTFunOf<F, S, A>): StateT<F, S, A> = StateT(runF)
+    fun <F: KindType, S, A> invokeF(runF: StateTFunOf<F, S, A>): StateT<F, S, A> = StateT(runF)
 
     /**
      * Lift a value of type `A` into `StateT<F, S, A>`.
@@ -68,7 +69,7 @@ class StateT<F, S, A>(
      * @param MF [Monad] for the context [F].
      * @param fa the value to lift.
      */
-    fun <F, S, A> lift(MF: Monad<F>, fa: Kind<F, A>): StateT<F, S, A> = MF.run {
+    fun <F: KindType, S, A> lift(MF: Monad<F>, fa: Kind<F, A>): StateT<F, S, A> = MF.run {
       StateT(just({ s -> fa.map({ a -> Tuple2(s, a) }) }))
     }
 
@@ -77,7 +78,7 @@ class StateT<F, S, A>(
      *
      * @param AF [Applicative] for the context [F].
      */
-    fun <F, S> get(AF: Applicative<F>): StateT<F, S, S> = StateT(AF.just({ s -> AF.just(Tuple2(s, s)) }))
+    fun <F: KindType, S> get(AF: Applicative<F>): StateT<F, S, S> = StateT(AF.just({ s -> AF.just(Tuple2(s, s)) }))
 
     /**
      * Inspect a value of the state [S] with [f] `(S) -> T` without modifying the state.
@@ -87,7 +88,7 @@ class StateT<F, S, A>(
      * @param AF [Applicative] for the context [F].
      * @param f the function applied to inspect [T] from [S].
      */
-    fun <F, S, T> inspect(AF: Applicative<F>, f: (S) -> T): StateT<F, S, T> = StateT(AF.just({ s -> AF.just(Tuple2(s, f(s))) }))
+    fun <F: KindType, S, T> inspect(AF: Applicative<F>, f: (S) -> T): StateT<F, S, T> = StateT(AF.just({ s -> AF.just(Tuple2(s, f(s))) }))
 
     /**
      * Modify the state with [f] `(S) -> S` and return [Unit].
@@ -95,7 +96,7 @@ class StateT<F, S, A>(
      * @param AF [Applicative] for the context [F].
      * @param f the modify function to apply.
      */
-    fun <F, S> modify(AF: Applicative<F>, f: (S) -> S): StateT<F, S, Unit> = AF.run {
+    fun <F: KindType, S> modify(AF: Applicative<F>, f: (S) -> S): StateT<F, S, Unit> = AF.run {
       StateT(just({ s -> just(f(s)).map { Tuple2(it, Unit) } }))
     }
 
@@ -105,7 +106,7 @@ class StateT<F, S, A>(
      * @param AF [Applicative] for the context [F].
      * @param f the modify function to apply.
      */
-    fun <F, S> modifyF(AF: Applicative<F>, f: (S) -> Kind<F, S>): StateT<F, S, Unit> = AF.run {
+    fun <F: KindType, S> modifyF(AF: Applicative<F>, f: (S) -> Kind<F, S>): StateT<F, S, Unit> = AF.run {
       StateT(just({ s -> f(s).map { Tuple2(it, Unit) } }))
     }
 
@@ -115,7 +116,7 @@ class StateT<F, S, A>(
      * @param AF [Applicative] for the context [F].
      * @param s value to set.
      */
-    fun <F, S> set(AF: Applicative<F>, s: S): StateT<F, S, Unit> = AF.run {
+    fun <F: KindType, S> set(AF: Applicative<F>, s: S): StateT<F, S, Unit> = AF.run {
       StateT(just({ _ -> just(Tuple2(s, Unit)) }))
     }
 
@@ -125,7 +126,7 @@ class StateT<F, S, A>(
      * @param AF [Applicative] for the context [F].
      * @param s value to set.
      */
-    fun <F, S> setF(AF: Applicative<F>, s: Kind<F, S>): StateT<F, S, Unit> = AF.run {
+    fun <F: KindType, S> setF(AF: Applicative<F>, s: Kind<F, S>): StateT<F, S, Unit> = AF.run {
       StateT(just({ _ -> s.map { Tuple2(it, Unit) } }))
     }
 
@@ -136,7 +137,7 @@ class StateT<F, S, A>(
      * @param f function that is called recusively until [arrow.Either.Right] is returned.
      * @param MF [Monad] for the context [F].
      */
-    fun <F, S, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> Kind<StateTPartialOf<F, S>, Either<A, B>>): StateT<F, S, B> = MF.run {
+    fun <F: KindType, S, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> Kind<StateTPartialOf<F, S>, Either<A, B>>): StateT<F, S, B> = MF.run {
       StateT(just({ s: S ->
         tailRecM(Tuple2(s, a), { (s, a0) ->
           f(a0).runM(this, s).map { (s, ab) ->
@@ -303,11 +304,11 @@ class StateT<F, S, A>(
  *
  * @param MF [Monad] for the context [F].
  */
-inline fun <F, S, A> StateTFunOf<F, S, A>.stateT(MF: Monad<F>): StateT<F, S, A> = StateT(this)
+inline fun <F: KindType, S, A> StateTFunOf<F, S, A>.stateT(MF: Monad<F>): StateT<F, S, A> = StateT(this)
 
 /**
  * Wrap the function with [StateT].
  *
  * @param MF [Monad] for the context [F].
  */
-inline fun <F, S, A> StateTFun<F, S, A>.stateT(MF: Monad<F>): StateT<F, S, A> = StateT(MF, this)
+inline fun <F: KindType, S, A> StateTFun<F, S, A>.stateT(MF: Monad<F>): StateT<F, S, A> = StateT(MF, this)

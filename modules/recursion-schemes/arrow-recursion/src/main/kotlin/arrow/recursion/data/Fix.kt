@@ -1,6 +1,7 @@
 package arrow.recursion.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Eval
 import arrow.higherkind
 import arrow.instance
@@ -14,16 +15,16 @@ import arrow.recursion.typeclasses.Recursive
  * This type is the type level encoding of primitive recursion.
  */
 @higherkind
-data class Fix<out A>(val unfix: Kind<A, Eval<FixOf<A>>>) : FixOf<A> {
+data class Fix<out A: KindType>(val unfix: Kind<A, Eval<FixOf<A>>>) : FixOf<A>() {
   companion object
 }
 
 @instance(Fix::class)
 interface FixBirecursiveInstance : Birecursive<ForFix> {
-  override fun <F> Functor<F>.projectT(tf: Kind<ForFix, F>) =
+  override fun <F: KindType> Functor<F>.projectT(tf: Kind<ForFix, F>) =
     tf.fix().unfix.map { it.value() }
 
-  override fun <F> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForFix, F>>>) =
+  override fun <F: KindType> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForFix, F>>>) =
     Eval.later { Fix(tf) }
 }
 

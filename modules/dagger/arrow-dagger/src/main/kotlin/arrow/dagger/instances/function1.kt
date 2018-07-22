@@ -1,5 +1,6 @@
 package arrow.dagger.instances
 
+import arrow.KindType
 import arrow.core.Function1PartialOf
 import arrow.instances.Function1ApplicativeInstance
 import arrow.instances.Function1FunctorInstance
@@ -12,7 +13,7 @@ import dagger.Provides
 import javax.inject.Inject
 
 @Module
-abstract class Function1Instances<F> {
+abstract class Function1Instances<F: KindType> {
 
   @Provides
   fun function1Functor(ev: DaggerFunction1FunctorInstance<F>): Functor<Function1PartialOf<F>> = ev
@@ -25,8 +26,8 @@ abstract class Function1Instances<F> {
 
 }
 
-class DaggerFunction1FunctorInstance<F> @Inject constructor(val FF: Functor<F>) : Function1FunctorInstance<F>
+class DaggerFunction1FunctorInstance<F: KindType> @Inject constructor(val FF: Functor<F>) : Function1FunctorInstance<F>
 
-class DaggerFunction1ApplicativeInstance<F> @Inject constructor(val FF: Monad<F>) : Function1ApplicativeInstance<F>
+class DaggerFunction1ApplicativeInstance<F: KindType> @Inject constructor(val FF: Monad<F>) : Function1ApplicativeInstance<F>
 
-class DaggerFunction1MonadInstance<F> @Inject constructor(val FF: Monad<F>) : Function1MonadInstance<F>
+class DaggerFunction1MonadInstance<F: KindType> @Inject constructor(val FF: Monad<F>) : Function1MonadInstance<F>

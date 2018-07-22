@@ -1,12 +1,13 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
 import arrow.core.identity
 
-interface ApplicativeError<F, E> : Applicative<F> {
+interface ApplicativeError<F: KindType, E> : Applicative<F> {
 
   fun <A> raiseError(e: E): Kind<F, A>
 

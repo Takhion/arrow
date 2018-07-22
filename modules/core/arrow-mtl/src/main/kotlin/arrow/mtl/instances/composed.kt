@@ -1,12 +1,13 @@
 package arrow.mtl.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Option
 import arrow.mtl.typeclasses.FunctorFilter
 import arrow.mtl.typeclasses.TraverseFilter
 import arrow.typeclasses.*
 
-interface ComposedFunctorFilter<F, G> : FunctorFilter<Nested<F, G>>, ComposedFunctor<F, G> {
+interface ComposedFunctorFilter<F: KindType, G: KindType> : FunctorFilter<Nested<F, G>>, ComposedFunctor<F, G> {
 
   override fun F(): Functor<F>
 
@@ -19,7 +20,7 @@ interface ComposedFunctorFilter<F, G> : FunctorFilter<Nested<F, G>>, ComposedFun
     fga.nest().mapFilter(f).unnest()
 
   companion object {
-    operator fun <F, G> invoke(FF: Functor<F>, FFG: FunctorFilter<G>): ComposedFunctorFilter<F, G> =
+    operator fun <F: KindType, G: KindType> invoke(FF: Functor<F>, FFG: FunctorFilter<G>): ComposedFunctorFilter<F, G> =
       object : ComposedFunctorFilter<F, G> {
         override fun F(): Functor<F> = FF
 
@@ -28,7 +29,7 @@ interface ComposedFunctorFilter<F, G> : FunctorFilter<Nested<F, G>>, ComposedFun
   }
 }
 
-interface ComposedTraverseFilter<F, G> :
+interface ComposedTraverseFilter<F: KindType, G: KindType> :
   TraverseFilter<Nested<F, G>>,
   ComposedTraverse<F, G> {
 
@@ -38,15 +39,15 @@ interface ComposedTraverseFilter<F, G> :
 
   override fun GA(): Applicative<G>
 
-  override fun <H, A, B> Kind<Nested<F, G>, A>.traverseFilter(AP: Applicative<H>, f: (A) -> Kind<H, Option<B>>): Kind<H, Kind<Nested<F, G>, B>> = AP.run {
+  override fun <H: KindType, A, B> Kind<Nested<F, G>, A>.traverseFilter(AP: Applicative<H>, f: (A) -> Kind<H, Option<B>>): Kind<H, Kind<Nested<F, G>, B>> = AP.run {
     FT().run { unnest().traverse(AP, { ga -> GT().run { ga.traverseFilter(AP, f) } }) }.map({ it.nest() })
   }
 
-  fun <H, A, B> traverseFilterC(fa: Kind<F, Kind<G, A>>, f: (A) -> Kind<H, Option<B>>, HA: Applicative<H>): Kind<H, Kind<Nested<F, G>, B>> =
+  fun <H: KindType, A, B> traverseFilterC(fa: Kind<F, Kind<G, A>>, f: (A) -> Kind<H, Option<B>>, HA: Applicative<H>): Kind<H, Kind<Nested<F, G>, B>> =
     fa.nest().traverseFilter(HA, f)
 
   companion object {
-    operator fun <F, G> invoke(
+    operator fun <F: KindType, G: KindType> invoke(
       FF: Traverse<F>,
       GF: TraverseFilter<G>,
       GA: Applicative<G>): ComposedTraverseFilter<F, G> =

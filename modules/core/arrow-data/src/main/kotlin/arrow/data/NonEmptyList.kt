@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -14,7 +15,7 @@ typealias Nel<A> = NonEmptyList<A>
 class NonEmptyList<out A> private constructor(
   val head: A,
   val tail: List<A>,
-  val all: List<A>) : NonEmptyListOf<A> {
+  val all: List<A>) : NonEmptyListOf<A>() {
 
   constructor(head: A, tail: List<A>) : this(head, tail, listOf(head) + tail)
   private constructor(list: List<A>) : this(list[0], list.drop(1), list)
@@ -44,7 +45,7 @@ class NonEmptyList<out A> private constructor(
   fun <B> foldRight(lb: Eval<B>, f: (A, Eval<B>) -> Eval<B>): Eval<B> =
     all.k().foldRight(lb, f)
 
-  fun <G, B> traverse(AG: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, NonEmptyList<B>> = with(AG) {
+  fun <G: KindType, B> traverse(AG: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, NonEmptyList<B>> = with(AG) {
     f(fix().head).map2Eval(Eval.always {
       tail.k().traverse(AG, f)
     }, {
@@ -124,7 +125,7 @@ class NonEmptyList<out A> private constructor(
 
 fun <A> A.nel(): NonEmptyList<A> = NonEmptyList.of(this)
 
-inline fun <A, G> NonEmptyListOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, NonEmptyList<A>> =
+inline fun <A, G: KindType> NonEmptyListOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, NonEmptyList<A>> =
   fix().traverse(GA, ::identity)
 
 fun <A> NonEmptyListOf<A>.combineK(y: NonEmptyListOf<A>): NonEmptyList<A> = fix().plus(y.fix())

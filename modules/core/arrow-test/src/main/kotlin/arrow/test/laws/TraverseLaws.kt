@@ -1,6 +1,8 @@
 package arrow.test.laws
 
 import arrow.Kind
+import arrow.KindType
+import arrow.Witness
 import arrow.core.*
 import arrow.typeclasses.*
 import arrow.test.generators.genConstructor
@@ -17,16 +19,14 @@ typealias TIK<A> = Kind<TIF, A>
 fun <A> TIK<A>.fix(): TIC<A> =
   this as TIC<A>
 
-data class TIC<out A>(val ti: TI<A>) : TIK<A>
+data class TIC<out A>(val ti: TI<A>) : TIK<A>()
 
-class TIF {
-  private constructor()
-}
+object TIF : Witness<TIC<*>>()
 
 object TraverseLaws {
   // FIXME(paco): this implementation will crash the inliner. Wait for fix: https://youtrack.jetbrains.com/issue/KT-18660
   /*
-  inline fun <F> laws(TF: Traverse<F>, AF: Applicative<F>, EQ: Eq<Kind<F, Int>>): List<Law> =
+  inline fun <F: KindType> laws(TF: Traverse<F>, AF: Applicative<F>, EQ: Eq<Kind<F, Int>>): List<Law> =
       FoldableLaws.laws(TF, { AF.just(it) }, Eq.any()) + FunctorLaws.laws(AF, EQ) + listOf(
               Law("Traverse Laws: Identity", { identityTraverse(TF, AF, { AF.just(it) }, EQ) }),
               Law("Traverse Laws: Sequential composition", { sequentialComposition(TF, { AF.just(it) }, EQ) }),
@@ -35,7 +35,7 @@ object TraverseLaws {
       )
   */
 
-  inline fun <F> laws(TF: Traverse<F>, FF: Functor<F>, noinline cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>): List<Law> =
+  inline fun <F: KindType> laws(TF: Traverse<F>, FF: Functor<F>, noinline cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>): List<Law> =
     FoldableLaws.laws(TF, cf, Eq.any()) + FunctorLaws.laws(FF, cf, EQ) + listOf(
       Law("Traverse Laws: Identity", { TF.identityTraverse(FF, cf, EQ) }),
       Law("Traverse Laws: Sequential composition", { TF.sequentialComposition(cf, EQ) }),
@@ -43,13 +43,13 @@ object TraverseLaws {
       Law("Traverse Laws: FoldMap derived", { TF.foldMapDerived(cf) })
     )
 
-  fun <F> Traverse<F>.identityTraverse(FF: Functor<F>, cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) = Id.applicative().run {
+  fun <F: KindType> Traverse<F>.identityTraverse(FF: Functor<F>, cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) = Id.applicative().run {
     forAll(genFunctionAToB<Int, Kind<ForId, Int>>(genConstructor(genIntSmall(), ::Id)), genConstructor(genIntSmall(), cf), { f: (Int) -> Kind<ForId, Int>, fa: Kind<F, Int> ->
       fa.traverse(this, f).value().equalUnderTheLaw(FF.run { fa.map(f).map { it.value() } }, EQ)
     })
   }
 
-  fun <F> Traverse<F>.sequentialComposition(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) = Id.applicative().run {
+  fun <F: KindType> Traverse<F>.sequentialComposition(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) = Id.applicative().run {
     forAll(genFunctionAToB<Int, Kind<ForId, Int>>(genConstructor(genIntSmall(), ::Id)), genFunctionAToB<Int, Kind<ForId, Int>>(genConstructor(genIntSmall(), ::Id)), genConstructor(genIntSmall(), cf), { f: (Int) -> Kind<ForId, Int>, g: (Int) -> Kind<ForId, Int>, fha: Kind<F, Int> ->
 
       val fa = fha.traverse(this, f).fix()
@@ -59,7 +59,7 @@ object TraverseLaws {
     })
   }
 
-  fun <F> Traverse<F>.parallelComposition(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) =
+  fun <F: KindType> Traverse<F>.parallelComposition(cf: (Int) -> Kind<F, Int>, EQ: Eq<Kind<F, Int>>) =
     forAll(genFunctionAToB<Int, Kind<ForId, Int>>(genConstructor(genIntSmall(), ::Id)), genFunctionAToB<Int, Kind<ForId, Int>>(genConstructor(genIntSmall(), ::Id)), genConstructor(genIntSmall(), cf), { f: (Int) -> Kind<ForId, Int>, g: (Int) -> Kind<ForId, Int>, fha: Kind<F, Int> ->
       val TIA = object : Applicative<TIF> {
         override fun <A> just(a: A): Kind<TIF, A> =
@@ -85,7 +85,7 @@ object TraverseLaws {
       seen.equalUnderTheLaw(expected, TIEQ)
     })
 
-  fun <F> Traverse<F>.foldMapDerived(cf: (Int) -> Kind<F, Int>) =
+  fun <F: KindType> Traverse<F>.foldMapDerived(cf: (Int) -> Kind<F, Int>) =
     forAll(genFunctionAToB<Int, Int>(genIntSmall()), genConstructor(genIntSmall(), cf), { f: (Int) -> Int, fa: Kind<F, Int> ->
       val traversed = fa.traverse(Const.applicative(Int.monoid()), { a -> f(a).const() }).value()
       val mapped = fa.foldMap(Int.monoid(), f)

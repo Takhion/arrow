@@ -1,12 +1,13 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
 
 @higherkind
-data class ListK<out A>(val list: List<A>) : ListKOf<A>, List<A> by list {
+data class ListK<out A>(val list: List<A>) : ListKOf<A>(), List<A> by list {
 
   fun <B> flatMap(f: (A) -> ListKOf<B>): ListK<B> = this.fix().list.flatMap { f(it).fix().list }.k()
 
@@ -24,7 +25,7 @@ data class ListK<out A>(val list: List<A>) : ListKOf<A>, List<A> by list {
 
   fun <B> ap(ff: ListKOf<(A) -> B>): ListK<B> = ff.fix().flatMap { f -> map(f) }.fix()
 
-  fun <G, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ListK<B>> =
+  fun <G: KindType, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ListK<B>> =
     foldRight(Eval.always { GA.just(emptyList<B>().k()) }) { a, eval ->
       GA.run { f(a).map2Eval(eval) { (listOf(it.a) + it.b).k() } }
     }.value()
@@ -74,7 +75,7 @@ data class ListK<out A>(val list: List<A>) : ListKOf<A>, List<A> by list {
 fun <A> ListKOf<A>.combineK(y: ListKOf<A>): ListK<A> =
   (fix().list + y.fix().list).k()
 
-inline fun <A, G> ListKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, ListK<A>> =
+inline fun <A, G: KindType> ListKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, ListK<A>> =
   fix().traverse(GA, ::identity)
 
 fun <A> List<A>.k(): ListK<A> = ListK(this)

@@ -1,9 +1,10 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Tuple2
 
-interface Functor<F> {
+interface Functor<F: KindType> {
 
   fun <A, B> Kind<F, A>.map(f: (A) -> B): Kind<F, B>
 

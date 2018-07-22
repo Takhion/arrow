@@ -97,5 +97,5 @@ interface MonoKEffectInstance :
 
 object MonoKContext : MonoKEffectInstance
 
-infix fun <A> ForMonoK.Companion.extensions(f: MonoKContext.() -> A): A =
+infix fun <A> ForMonoK.extensions(f: MonoKContext.() -> A): A =
   f(MonoKContext)

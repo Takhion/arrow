@@ -1,6 +1,7 @@
 package arrow.optics.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Left
 import arrow.core.Right
 import arrow.core.toT
@@ -20,8 +21,8 @@ import arrow.typeclasses.Applicative
  * @receiver [ListK.Companion] to make it statically available.
  * @return [Traversal] with source [ListK] and focus every [A] of the source.
  */
-fun <A> ListK.Companion.traversal(): Traversal<ListK<A>, A> = object : Traversal<ListK<A>, A> {
-  override fun <F> modifyF(FA: Applicative<F>, s: ListK<A>, f: (A) -> Kind<F, A>): Kind<F, ListK<A>> =
+fun <A> ListK.Companion.traversal(): Traversal<ListK<A>, A> = object : Traversal<ListK<A>, A>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: ListK<A>, f: (A) -> Kind<F, A>): Kind<F, ListK<A>> =
     s.traverse(FA, f)
 }
 
@@ -39,8 +40,8 @@ interface ListKEachInstance<A> : Each<ListK<A>, A> {
  */
 @instance(ListK::class)
 interface ListKFilterIndexInstance<A> : FilterIndex<ListK<A>, Int, A> {
-  override fun filter(p: (Int) -> Boolean): Traversal<ListK<A>, A> = object : Traversal<ListK<A>, A> {
-    override fun <F> modifyF(FA: Applicative<F>, s: ListK<A>, f: (A) -> Kind<F, A>): Kind<F, ListK<A>> = FA.run {
+  override fun filter(p: (Int) -> Boolean): Traversal<ListK<A>, A> = object : Traversal<ListK<A>, A>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: ListK<A>, f: (A) -> Kind<F, A>): Kind<F, ListK<A>> = FA.run {
       s.mapIndexed { index, a -> a toT index }.k().traverse(FA, { (a, j) ->
         if (p(j)) f(a) else just(a)
       })

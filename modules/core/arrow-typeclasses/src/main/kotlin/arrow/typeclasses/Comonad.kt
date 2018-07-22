@@ -1,6 +1,7 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.identity
 import java.io.Serializable
 import kotlin.coroutines.experimental.*
@@ -10,7 +11,7 @@ import kotlin.coroutines.experimental.intrinsics.suspendCoroutineOrReturn
 /**
  * The dual of monads, used to extract values from F
  */
-interface Comonad<F> : Functor<F> {
+interface Comonad<F: KindType> : Functor<F> {
 
   fun <A, B> Kind<F, A>.coflatMap(f: (Kind<F, A>) -> B): Kind<F, B>
 
@@ -20,7 +21,7 @@ interface Comonad<F> : Functor<F> {
 }
 
 @RestrictsSuspension
-open class ComonadContinuation<F, A : Any>(CM: Comonad<F>, override val context: CoroutineContext = EmptyCoroutineContext) : Serializable, Continuation<A>, Comonad<F> by CM {
+open class ComonadContinuation<F: KindType, A : Any>(CM: Comonad<F>, override val context: CoroutineContext = EmptyCoroutineContext) : Serializable, Continuation<A>, Comonad<F> by CM {
 
   override fun resume(value: A) {
     returnedMonad = value
@@ -50,7 +51,7 @@ open class ComonadContinuation<F, A : Any>(CM: Comonad<F>, override val context:
  * A coroutine is initiated and inside `MonadContinuation` suspended yielding to `flatMap` once all the flatMap binds are completed
  * the underlying monad is returned from the act of executing the coroutine
  */
-fun <F, B : Any> Comonad<F>.cobinding(c: suspend ComonadContinuation<F, *>.() -> B): B {
+fun <F: KindType, B : Any> Comonad<F>.cobinding(c: suspend ComonadContinuation<F, *>.() -> B): B {
   val continuation = ComonadContinuation<F, B>(this)
   c.startCoroutine(continuation, continuation)
   return continuation.returnedMonad

@@ -1,11 +1,12 @@
 package arrow.mtl.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Tuple2
 import arrow.typeclasses.Monad
 
 /** A monad that support monoidal accumulation (e.g. logging List<String>) */
-interface MonadWriter<F, W> : Monad<F> {
+interface MonadWriter<F: KindType, W> : Monad<F> {
 
   /** Lift a writer action into the effect */
   fun <A> writer(aw: Tuple2<W, A>): Kind<F, A>

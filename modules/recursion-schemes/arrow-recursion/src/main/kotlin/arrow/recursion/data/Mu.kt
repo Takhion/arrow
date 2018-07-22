@@ -1,6 +1,7 @@
 package arrow.recursion.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Eval
 import arrow.core.Eval.Now
 import arrow.higherkind
@@ -16,7 +17,7 @@ import arrow.recursion.typeclasses.Recursive
  * This type is the type level encoding of cata.
  */
 @higherkind
-abstract class Mu<out F> : MuOf<F> {
+abstract class Mu<out F: KindType> : MuOf<F>() {
   abstract fun <A> unMu(fa: Algebra<F, Eval<A>>): Eval<A>
 
   companion object
@@ -24,16 +25,16 @@ abstract class Mu<out F> : MuOf<F> {
 
 @instance(Mu::class)
 interface MuBirecursiveInstance : Birecursive<ForMu> {
-  override fun <F> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForMu, F>>>): Eval<Mu<F>> =
+  override fun <F: KindType> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForMu, F>>>): Eval<Mu<F>> =
     Eval.now(object : Mu<F>() {
       override fun <A> unMu(fa: Algebra<F, Eval<A>>) =
         fa(tf.map { it.flatMap { it.fix().unMu(fa) } })
     })
 
-  override fun <F> Functor<F>.projectT(tf: Kind<ForMu, F>): Kind<F, MuOf<F>> =
+  override fun <F: KindType> Functor<F>.projectT(tf: Kind<ForMu, F>): Kind<F, MuOf<F>> =
     cata(tf) { ff -> Eval.later { ff.map { f -> embedT(f.value().map(::Now)).value() } } }
 
-  override fun <F, A> Functor<F>.cata(tf: Kind<ForMu, F>, alg: Algebra<F, Eval<A>>): A =
+  override fun <F: KindType, A> Functor<F>.cata(tf: Kind<ForMu, F>, alg: Algebra<F, Eval<A>>): A =
     tf.fix().unMu(alg).value()
 }
 

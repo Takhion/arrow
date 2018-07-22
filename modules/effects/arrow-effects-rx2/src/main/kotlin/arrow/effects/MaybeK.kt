@@ -13,7 +13,7 @@ fun <A> Maybe<A>.k(): MaybeK<A> = MaybeK(this)
 fun <A> MaybeKOf<A>.value(): Maybe<A> = this.fix().maybe
 
 @higherkind
-data class MaybeK<A>(val maybe: Maybe<A>) : MaybeKOf<A>, MaybeKKindedJ<A> {
+data class MaybeK<A>(val maybe: Maybe<A>) : MaybeKOf<A>(), MaybeKKindedJ<A> {
 
   fun <B> map(f: (A) -> B): MaybeK<B> =
     maybe.map(f).k()

@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
@@ -10,7 +11,7 @@ import arrow.typeclasses.Applicative
 import arrow.typeclasses.Functor
 import arrow.typeclasses.Monad
 
-fun <F, A, B> EitherTOf<F, A, B>.value() = fix().value
+fun <F: KindType, A, B> EitherTOf<F, A, B>.value() = fix().value
 
 /**
  * [EitherT]`<F, A, B>` is a light wrapper on an `F<`[Either]`<A, B>>` with some
@@ -19,15 +20,15 @@ fun <F, A, B> EitherTOf<F, A, B>.value() = fix().value
  * It may also be said that [EitherT] is a monad transformer for [Either].
  */
 @higherkind
-data class EitherT<F, A, B>(val value: Kind<F, Either<A, B>>) : EitherTOf<F, A, B>, EitherTKindedJ<F, A, B> {
+data class EitherT<F: KindType, A, B>(val value: Kind<F, Either<A, B>>) : EitherTOf<F, A, B>(), EitherTKindedJ<F, A, B> {
 
   companion object {
 
-    operator fun <F, A, B> invoke(value: Kind<F, Either<A, B>>): EitherT<F, A, B> = EitherT(value)
+    operator fun <F: KindType, A, B> invoke(value: Kind<F, Either<A, B>>): EitherT<F, A, B> = EitherT(value)
 
-    fun <F, A, B> just(MF: Applicative<F>, b: B): EitherT<F, A, B> = right(MF, b)
+    fun <F: KindType, A, B> just(MF: Applicative<F>, b: B): EitherT<F, A, B> = right(MF, b)
 
-    fun <F, L, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> EitherTOf<F, L, Either<A, B>>): EitherT<F, L, B> = MF.run {
+    fun <F: KindType, L, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> EitherTOf<F, L, Either<A, B>>): EitherT<F, L, B> = MF.run {
       EitherT(tailRecM(a, {
         f(it).fix().value.map { recursionControl ->
           when (recursionControl) {
@@ -44,11 +45,11 @@ data class EitherT<F, A, B>(val value: Kind<F, Either<A, B>>) : EitherTOf<F, A, 
       }))
     }
 
-    fun <F, A, B> right(MF: Applicative<F>, b: B): EitherT<F, A, B> = EitherT(MF.just(Right(b)))
+    fun <F: KindType, A, B> right(MF: Applicative<F>, b: B): EitherT<F, A, B> = EitherT(MF.just(Right(b)))
 
-    fun <F, A, B> left(MF: Applicative<F>, a: A): EitherT<F, A, B> = EitherT(MF.just(Left(a)))
+    fun <F: KindType, A, B> left(MF: Applicative<F>, a: A): EitherT<F, A, B> = EitherT(MF.just(Left(a)))
 
-    fun <F, A, B> fromEither(AP: Applicative<F>, value: Either<A, B>): EitherT<F, A, B> =
+    fun <F: KindType, A, B> fromEither(AP: Applicative<F>, value: Either<A, B>): EitherT<F, A, B> =
       EitherT(AP.just(value))
   }
 

@@ -1,6 +1,7 @@
 package arrow.optics.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Left
 import arrow.core.Right
 import arrow.core.toT
@@ -20,8 +21,8 @@ import arrow.typeclasses.Applicative
  * @receiver [SequenceK.Companion] to make it statically available.
  * @return [Traversal] with source [SequenceK] and focus in every [A] of the source.
  */
-fun <A> SequenceK.Companion.traversal(): Traversal<SequenceK<A>, A> = object : Traversal<SequenceK<A>, A> {
-  override fun <F> modifyF(FA: Applicative<F>, s: SequenceK<A>, f: (A) -> Kind<F, A>): Kind<F, SequenceK<A>> =
+fun <A> SequenceK.Companion.traversal(): Traversal<SequenceK<A>, A> = object : Traversal<SequenceK<A>, A>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: SequenceK<A>, f: (A) -> Kind<F, A>): Kind<F, SequenceK<A>> =
     s.traverse(FA, f)
 }
 
@@ -39,8 +40,8 @@ interface SequenceKEachInstance<A> : Each<SequenceK<A>, A> {
  */
 @instance(SequenceK::class)
 interface SequenceKFilterIndexInstance<A> : FilterIndex<SequenceK<A>, Int, A> {
-  override fun filter(p: (Int) -> Boolean): Traversal<SequenceK<A>, A> = object : Traversal<SequenceK<A>, A> {
-    override fun <F> modifyF(FA: Applicative<F>, s: SequenceK<A>, f: (A) -> Kind<F, A>): Kind<F, SequenceK<A>> = FA.run {
+  override fun filter(p: (Int) -> Boolean): Traversal<SequenceK<A>, A> = object : Traversal<SequenceK<A>, A>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: SequenceK<A>, f: (A) -> Kind<F, A>): Kind<F, SequenceK<A>> = FA.run {
       s.mapIndexed { index, a -> a toT index }.k().traverse(FA, { (a, j) ->
         if (p(j)) f(a) else just(a)
       })

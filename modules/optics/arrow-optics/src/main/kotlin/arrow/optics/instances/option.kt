@@ -1,6 +1,7 @@
 package arrow.optics.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Option
 import arrow.core.traverse
 import arrow.instance
@@ -14,8 +15,8 @@ import arrow.typeclasses.Applicative
  * @receiver [Option.Companion] to make it statically available.
  * @return [Traversal] with source [Option] and focus in every [arrow.core.Some] of the source.
  */
-fun <A> Option.Companion.traversal(): Traversal<Option<A>, A> = object : Traversal<Option<A>, A> {
-  override fun <F> modifyF(FA: Applicative<F>, s: Option<A>, f: (A) -> Kind<F, A>): Kind<F, Option<A>> = with(Option.traverse()) {
+fun <A> Option.Companion.traversal(): Traversal<Option<A>, A> = object : Traversal<Option<A>, A>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: Option<A>, f: (A) -> Kind<F, A>): Kind<F, Option<A>> = with(Option.traverse()) {
     s.traverse(FA, f)
   }
 }

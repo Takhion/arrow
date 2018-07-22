@@ -1,8 +1,9 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 
-interface SemigroupK<F> {
+interface SemigroupK<F: KindType> {
 
   /**
    * Combine two F<A> values.

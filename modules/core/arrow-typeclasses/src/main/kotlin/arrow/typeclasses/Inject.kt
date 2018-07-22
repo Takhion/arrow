@@ -1,6 +1,7 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.FunctionK
 
 /**
@@ -8,7 +9,7 @@ import arrow.core.FunctionK
  *
  * @see [[http://www.staff.science.uu.nl/~swier004/publications/2008-jfp.pdf]]
  */
-interface Inject<F, G> {
+interface Inject<F: KindType, G: KindType> {
 
   fun inj(): FunctionK<F, G>
 

@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.*
 import arrow.instance
@@ -96,7 +97,7 @@ interface ListKTraverseInstance : Traverse<ForListK> {
   override fun <A, B> Kind<ForListK, A>.map(f: (A) -> B): ListK<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForListK, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ListK<B>> =
+  override fun <G: KindType, A, B> Kind<ForListK, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ListK<B>> =
     fix().traverse(AP, f)
 
   override fun <A, B> Kind<ForListK, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -129,5 +130,5 @@ object ListKContext : ListKMonadInstance, ListKTraverseInstance, ListKMonoidKIns
     fix().map(f)
 }
 
-infix fun <A> ForListK.Companion.extensions(f: ListKContext.() -> A): A =
+infix fun <A> ForListK.extensions(f: ListKContext.() -> A): A =
   f(ListKContext)

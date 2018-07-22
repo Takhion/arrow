@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.effects.typeclasses.Proc
 import arrow.higherkind
@@ -16,7 +17,7 @@ fun <A> ObservableKOf<A>.value(): Observable<A> =
   this.fix().observable
 
 @higherkind
-data class ObservableK<A>(val observable: Observable<A>) : ObservableKOf<A>, ObservableKKindedJ<A> {
+data class ObservableK<A>(val observable: Observable<A>) : ObservableKOf<A>(), ObservableKKindedJ<A> {
   fun <B> map(f: (A) -> B): ObservableK<B> =
     observable.map(f).k()
 
@@ -43,7 +44,7 @@ data class ObservableK<A>(val observable: Observable<A>) : ObservableKOf<A>, Obs
     return Eval.defer { loop(this) }
   }
 
-  fun <G, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ObservableK<B>> = GA.run {
+  fun <G: KindType, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, ObservableK<B>> = GA.run {
     foldRight(Eval.always { GA.just(Observable.empty<B>().k()) }) { a, eval ->
       f(a).map2Eval(eval) { Observable.concat(Observable.just<B>(it.a), it.b.observable).k() }
     }.value()
@@ -117,5 +118,5 @@ data class ObservableK<A>(val observable: Observable<A>) : ObservableKOf<A>, Obs
   }
 }
 
-inline fun <A, G> ObservableKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, ObservableK<A>> =
+inline fun <A, G: KindType> ObservableKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, ObservableK<A>> =
   fix().traverse(GA, ::identity)

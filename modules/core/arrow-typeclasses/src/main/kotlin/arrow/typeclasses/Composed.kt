@@ -2,30 +2,42 @@ package arrow.typeclasses
 
 import arrow.Kind
 import arrow.Kind2
+import arrow.KindType
+import arrow.Kind_
+import arrow.Witness
 import arrow.core.Eval
 
 /**
  * https://www.youtube.com/watch?v=wvSP5qYiz4Y
  */
-interface Nested<out F, out G>
+sealed class Nested<F: KindType, G: KindType> : Witness<Nested<F, G>>() {
+  companion object: Nested<Kind_, Kind_>() {
+    @Suppress("UNCHECKED_CAST")
+    operator fun <F: KindType, G: KindType> invoke() = this as Nested<F, G>
+  }
+}
 
 typealias NestedType<F, G, A> = Kind<Nested<F, G>, A>
 
 typealias UnnestedType<F, G, A> = Kind<F, Kind<G, A>>
 
-@Suppress("UNCHECKED_CAST")
-fun <F, G, A> UnnestedType<F, G, A>.nest(): NestedType<F, G, A> = this as Kind<Nested<F, G>, A>
+typealias BiNestedType<F, G, A, B> = Kind2<Nested<F, G>, A, B>
+
+typealias BiUnnestedType<F, G, A, B> = Kind2<F, Kind2<G, A, B>, Kind2<G, A, B>>
 
 @Suppress("UNCHECKED_CAST")
-fun <F, G, A> NestedType<F, G, A>.unnest(): Kind<F, Kind<G, A>> = this as Kind<F, Kind<G, A>>
+fun <F: KindType, G: KindType, A> UnnestedType<F, G, A>.nest() = this as NestedType<F, G, A>
 
 @Suppress("UNCHECKED_CAST")
-fun <F, G, A, B> Kind2<F, Kind2<G, A, B>, Kind2<G, A, B>>.binest(): Kind2<Nested<F, G>, A, B> = this as Kind2<Nested<F, G>, A, B>
+fun <F: KindType, G: KindType, A> NestedType<F, G, A>.unnest() = this as UnnestedType<F, G, A>
 
 @Suppress("UNCHECKED_CAST")
-fun <F, G, A, B> Kind2<Nested<F, G>, A, B>.biunnest(): Kind2<F, Kind2<G, A, B>, Kind2<G, A, B>> = this as Kind2<F, Kind2<G, A, B>, Kind2<G, A, B>>
+fun <F: KindType, G: KindType, A, B> BiUnnestedType<F, G, A, B>.binest() = this as BiNestedType<F, G, A, B>
 
-interface ComposedFoldable<F, G> :
+@Suppress("UNCHECKED_CAST")
+fun <F: KindType, G: KindType, A, B> BiNestedType<F, G, A, B>.biunnest() = this as BiUnnestedType<F, G, A, B>
+
+interface ComposedFoldable<F: KindType, G: KindType> :
   Foldable<Nested<F, G>> {
 
   fun FF(): Foldable<F>
@@ -45,7 +57,7 @@ interface ComposedFoldable<F, G> :
     nest().foldRight(lb, f)
 
   companion object {
-    operator fun <F, G> invoke(FF: Foldable<F>, GF: Foldable<G>): ComposedFoldable<F, G> =
+    operator fun <F: KindType, G: KindType> invoke(FF: Foldable<F>, GF: Foldable<G>): ComposedFoldable<F, G> =
       object : ComposedFoldable<F, G> {
         override fun FF(): Foldable<F> = FF
 
@@ -54,14 +66,14 @@ interface ComposedFoldable<F, G> :
   }
 }
 
-fun <F, G> Foldable<F>.compose(GT: Foldable<G>): ComposedFoldable<F, G> = object :
+fun <F: KindType, G: KindType> Foldable<F>.compose(GT: Foldable<G>): ComposedFoldable<F, G> = object :
   ComposedFoldable<F, G> {
   override fun FF(): Foldable<F> = this@compose
 
   override fun GF(): Foldable<G> = GT
 }
 
-interface ComposedTraverse<F, G> :
+interface ComposedTraverse<F: KindType, G: KindType> :
   Traverse<Nested<F, G>>,
   ComposedFoldable<F, G> {
 
@@ -75,15 +87,15 @@ interface ComposedTraverse<F, G> :
 
   override fun GF(): Foldable<G> = GT()
 
-  override fun <H, A, B> Kind<Nested<F, G>, A>.traverse(AP: Applicative<H>, f: (A) -> Kind<H, B>): Kind<H, Kind<Nested<F, G>, B>> = AP.run {
+  override fun <H: KindType, A, B> Kind<Nested<F, G>, A>.traverse(AP: Applicative<H>, f: (A) -> Kind<H, B>): Kind<H, Kind<Nested<F, G>, B>> = AP.run {
     FT().run { unnest().traverse(AP, { ga -> GT().run { ga.traverse(AP, f) } }) }.map({ it.nest() })
   }
 
-  fun <H, A, B> traverseC(fa: Kind<F, Kind<G, A>>, f: (A) -> Kind<H, B>, HA: Applicative<H>): Kind<H, Kind<Nested<F, G>, B>> =
+  fun <H: KindType, A, B> traverseC(fa: Kind<F, Kind<G, A>>, f: (A) -> Kind<H, B>, HA: Applicative<H>): Kind<H, Kind<Nested<F, G>, B>> =
     fa.nest().traverse(HA, f)
 
   companion object {
-    operator fun <F, G> invoke(
+    operator fun <F: KindType, G: KindType> invoke(
       FF: Traverse<F>,
       GF: Traverse<G>,
       GA: Applicative<G>): ComposedTraverse<F, G> =
@@ -97,7 +109,7 @@ interface ComposedTraverse<F, G> :
   }
 }
 
-fun <F, G> Traverse<F>.compose(GT: Traverse<G>, GA: Applicative<G>): Traverse<Nested<F, G>> =
+fun <F: KindType, G: KindType> Traverse<F>.compose(GT: Traverse<G>, GA: Applicative<G>): Traverse<Nested<F, G>> =
   object :
     ComposedTraverse<F, G> {
     override fun FT(): Traverse<F> = this@compose
@@ -107,7 +119,7 @@ fun <F, G> Traverse<F>.compose(GT: Traverse<G>, GA: Applicative<G>): Traverse<Ne
     override fun GA(): Applicative<G> = GA
   }
 
-interface ComposedSemigroupK<F, G> : SemigroupK<Nested<F, G>> {
+interface ComposedSemigroupK<F: KindType, G: KindType> : SemigroupK<Nested<F, G>> {
 
   fun F(): SemigroupK<F>
 
@@ -119,18 +131,18 @@ interface ComposedSemigroupK<F, G> : SemigroupK<Nested<F, G>> {
     x.nest().combineK(y.nest())
 
   companion object {
-    operator fun <F, G> invoke(SF: SemigroupK<F>): SemigroupK<Nested<F, G>> =
+    operator fun <F: KindType, G: KindType> invoke(SF: SemigroupK<F>): SemigroupK<Nested<F, G>> =
       object : ComposedSemigroupK<F, G> {
         override fun F(): SemigroupK<F> = SF
       }
   }
 }
 
-fun <F, G> SemigroupK<F>.compose(): SemigroupK<Nested<F, G>> = object : ComposedSemigroupK<F, G> {
+fun <F: KindType, G: KindType> SemigroupK<F>.compose(): SemigroupK<Nested<F, G>> = object : ComposedSemigroupK<F, G> {
   override fun F(): SemigroupK<F> = this@compose
 }
 
-interface ComposedMonoidK<F, G> : MonoidK<Nested<F, G>>, ComposedSemigroupK<F, G> {
+interface ComposedMonoidK<F: KindType, G: KindType> : MonoidK<Nested<F, G>>, ComposedSemigroupK<F, G> {
 
   override fun F(): MonoidK<F>
 
@@ -139,18 +151,18 @@ interface ComposedMonoidK<F, G> : MonoidK<Nested<F, G>>, ComposedSemigroupK<F, G
   fun <A> emptyC(): Kind<F, Kind<G, A>> = empty<A>().unnest()
 
   companion object {
-    operator fun <F, G> invoke(MK: MonoidK<F>): MonoidK<Nested<F, G>> =
+    operator fun <F: KindType, G: KindType> invoke(MK: MonoidK<F>): MonoidK<Nested<F, G>> =
       object : ComposedMonoidK<F, G> {
         override fun F(): MonoidK<F> = MK
       }
   }
 }
 
-fun <F, G> MonoidK<F>.compose(): MonoidK<Nested<F, G>> = object : ComposedMonoidK<F, G> {
+fun <F: KindType, G: KindType> MonoidK<F>.compose(): MonoidK<Nested<F, G>> = object : ComposedMonoidK<F, G> {
   override fun F(): MonoidK<F> = this@compose
 }
 
-interface ComposedFunctor<F, G> : Functor<Nested<F, G>> {
+interface ComposedFunctor<F: KindType, G: KindType> : Functor<Nested<F, G>> {
   fun F(): Functor<F>
 
   fun G(): Functor<G>
@@ -163,7 +175,7 @@ interface ComposedFunctor<F, G> : Functor<Nested<F, G>> {
     fa.nest().map(f).unnest()
 
   companion object {
-    operator fun <F, G> invoke(FF: Functor<F>, GF: Functor<G>): Functor<Nested<F, G>> =
+    operator fun <F: KindType, G: KindType> invoke(FF: Functor<F>, GF: Functor<G>): Functor<Nested<F, G>> =
       object : ComposedFunctor<F, G> {
         override fun F(): Functor<F> = FF
 
@@ -172,9 +184,9 @@ interface ComposedFunctor<F, G> : Functor<Nested<F, G>> {
   }
 }
 
-fun <F, G> Functor<F>.compose(GF: Functor<G>): Functor<Nested<F, G>> = ComposedFunctor(this, GF)
+fun <F: KindType, G: KindType> Functor<F>.compose(GF: Functor<G>): Functor<Nested<F, G>> = ComposedFunctor(this, GF)
 
-interface ComposedApplicative<F, G> : Applicative<Nested<F, G>>, ComposedFunctor<F, G> {
+interface ComposedApplicative<F: KindType, G: KindType> : Applicative<Nested<F, G>>, ComposedFunctor<F, G> {
   override fun F(): Applicative<F>
 
   override fun G(): Applicative<G>
@@ -191,7 +203,7 @@ interface ComposedApplicative<F, G> : Applicative<Nested<F, G>>, ComposedFunctor
     fa.nest().ap(ff.nest()).unnest()
 
   companion object {
-    operator fun <F, G> invoke(FF: Applicative<F>, GF: Applicative<G>)
+    operator fun <F: KindType, G: KindType> invoke(FF: Applicative<F>, GF: Applicative<G>)
       : Applicative<Nested<F, G>> =
       object : ComposedApplicative<F, G> {
         override fun F(): Applicative<F> = FF
@@ -201,13 +213,13 @@ interface ComposedApplicative<F, G> : Applicative<Nested<F, G>>, ComposedFunctor
   }
 }
 
-fun <F, G> Applicative<F>.compose(GA: Applicative<G>): Applicative<Nested<F, G>> = ComposedApplicative(this, GA)
+fun <F: KindType, G: KindType> Applicative<F>.compose(GA: Applicative<G>): Applicative<Nested<F, G>> = ComposedApplicative(this, GA)
 
-interface ComposedAlternative<F, G> : Alternative<Nested<F, G>>, ComposedApplicative<F, G>, ComposedMonoidK<F, G> {
+interface ComposedAlternative<F: KindType, G: KindType> : Alternative<Nested<F, G>>, ComposedApplicative<F, G>, ComposedMonoidK<F, G> {
   override fun F(): Alternative<F>
 
   companion object {
-    operator fun <F, G> invoke(AF: Alternative<F>, AG: Applicative<G>)
+    operator fun <F: KindType, G: KindType> invoke(AF: Alternative<F>, AG: Applicative<G>)
       : Alternative<Nested<F, G>> =
       object : ComposedAlternative<F, G> {
         override fun F(): Alternative<F> = AF
@@ -217,9 +229,9 @@ interface ComposedAlternative<F, G> : Alternative<Nested<F, G>>, ComposedApplica
   }
 }
 
-fun <F, G> Alternative<F>.compose(GA: Applicative<G>): Alternative<Nested<F, G>> = ComposedAlternative(this, GA)
+fun <F: KindType, G: KindType> Alternative<F>.compose(GA: Applicative<G>): Alternative<Nested<F, G>> = ComposedAlternative(this, GA)
 
-interface ComposedBifoldable<F, G> : Bifoldable<Nested<F, G>> {
+interface ComposedBifoldable<F: KindType, G: KindType> : Bifoldable<Nested<F, G>> {
   fun F(): Bifoldable<F>
 
   fun G(): Bifoldable<G>
@@ -241,7 +253,7 @@ interface ComposedBifoldable<F, G> : Bifoldable<Nested<F, G>> {
     fab.binest().bifoldRight(c, f, g)
 
   companion object {
-    operator fun <F, G> invoke(BF: Bifoldable<F>, BG: Bifoldable<G>): ComposedBifoldable<F, G> =
+    operator fun <F: KindType, G: KindType> invoke(BF: Bifoldable<F>, BG: Bifoldable<G>): ComposedBifoldable<F, G> =
       object : ComposedBifoldable<F, G> {
         override fun F(): Bifoldable<F> = BF
 
@@ -250,4 +262,4 @@ interface ComposedBifoldable<F, G> : Bifoldable<Nested<F, G>> {
   }
 }
 
-fun <F, G> Bifoldable<F>.compose(BG: Bifoldable<G>): Bifoldable<Nested<F, G>> = ComposedBifoldable(this, BG)
+fun <F: KindType, G: KindType> Bifoldable<F>.compose(BG: Bifoldable<G>): Bifoldable<Nested<F, G>> = ComposedBifoldable(this, BG)

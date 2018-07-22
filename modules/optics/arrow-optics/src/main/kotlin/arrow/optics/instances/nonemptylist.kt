@@ -1,6 +1,7 @@
 package arrow.optics.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Left
 import arrow.core.Right
 import arrow.core.toT
@@ -21,8 +22,8 @@ import arrow.typeclasses.Applicative
  * @receiver [NonEmptyList.Companion] to make it statically available.
  * @return [Traversal] with source [NonEmptyList] and focus every [A] of the source.
  */
-fun <A> NonEmptyList.Companion.traversal(): Traversal<NonEmptyList<A>, A> = object : Traversal<NonEmptyList<A>, A> {
-  override fun <F> modifyF(FA: Applicative<F>, s: NonEmptyList<A>, f: (A) -> Kind<F, A>): Kind<F, NonEmptyList<A>> =
+fun <A> NonEmptyList.Companion.traversal(): Traversal<NonEmptyList<A>, A> = object : Traversal<NonEmptyList<A>, A>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: NonEmptyList<A>, f: (A) -> Kind<F, A>): Kind<F, NonEmptyList<A>> =
     s.traverse(FA, f)
 }
 
@@ -40,8 +41,8 @@ interface NonEmptyListEachInstance<A> : Each<NonEmptyList<A>, A> {
  */
 @instance(NonEmptyList::class)
 interface NonEmptyListFilterIndexInstance<A> : FilterIndex<NonEmptyList<A>, Int, A> {
-  override fun filter(p: (Int) -> Boolean): Traversal<NonEmptyList<A>, A> = object : Traversal<NonEmptyList<A>, A> {
-    override fun <F> modifyF(FA: Applicative<F>, s: NonEmptyList<A>, f: (A) -> Kind<F, A>): Kind<F, NonEmptyList<A>> =
+  override fun filter(p: (Int) -> Boolean): Traversal<NonEmptyList<A>, A> = object : Traversal<NonEmptyList<A>, A>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: NonEmptyList<A>, f: (A) -> Kind<F, A>): Kind<F, NonEmptyList<A>> =
       s.all.mapIndexed { index, a -> a toT index }
         .let(NonEmptyList.Companion::fromListUnsafe)
         .traverse(FA) { (a, j) -> if (p(j)) f(a) else FA.just(a) }

@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.instance
 import arrow.typeclasses.*
@@ -100,11 +101,11 @@ interface TryFoldableInstance : Foldable<ForTry> {
     fix().foldRight(lb, f)
 }
 
-fun <A, B, G> TryOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Try<B>> = GA.run {
+fun <A, B, G: KindType> TryOf<A>.traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Try<B>> = GA.run {
   fix().fold({ just(Try.raise(it)) }, { f(it).map({ Try.just(it) }) })
 }
 
-fun <A, G> TryOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Try<A>> =
+fun <A, G: KindType> TryOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, Try<A>> =
   tryTraverse(GA, ::identity)
 
 @instance(Try::class)
@@ -112,7 +113,7 @@ interface TryTraverseInstance : Traverse<ForTry> {
   override fun <A, B> TryOf<A>.map(f: (A) -> B): Try<B> =
     fix().map(f)
 
-  override fun <G, A, B> TryOf<A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Try<B>> =
+  override fun <G: KindType, A, B> TryOf<A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, Try<B>> =
     tryTraverse(AP, f)
 
   override fun <A> TryOf<A>.exists(p: (A) -> Boolean): kotlin.Boolean =
@@ -130,5 +131,5 @@ object TryContext : TryMonadErrorInstance, TryTraverseInstance {
     fix().map(f)
 }
 
-infix fun <A> ForTry.Companion.extensions(f: TryContext.() -> A): A =
+infix fun <A> ForTry.extensions(f: TryContext.() -> A): A =
   f(TryContext)

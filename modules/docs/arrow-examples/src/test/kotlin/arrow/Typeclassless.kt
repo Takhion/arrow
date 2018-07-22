@@ -20,19 +20,19 @@ class TypeclasslessExamples : FreeSpec() {
 
   // Complete example of syntax using a simple fake typeclass
 
-  interface Identity<F> {
+  interface Identity<F: KindType> {
     fun <A> identify(a: Kind<F, A>): Kind<F, A> =
       a
   }
 
-  interface IdentifySyntax<F> {
+  interface IdentifySyntax<F: KindType> {
     fun ID(): Identity<F>
 
     fun <A> Kind<F, A>.identify(): Kind<F, A> =
       ID().identify(this)
   }
 
-  fun <F> Identity<F>.s() =
+  fun <F: KindType> Identity<F>.s() =
     object : IdentifySyntax<F> {
       override fun ID(): Identity<F> =
         this@s
@@ -40,7 +40,7 @@ class TypeclasslessExamples : FreeSpec() {
 
   // Syntax for existing typeclass
 
-  interface ApplicativeSyntax<F> {
+  interface ApplicativeSyntax<F: KindType> {
     fun AP(): Applicative<F>
 
     fun <A> A.just(): Kind<F, A> =
@@ -51,7 +51,7 @@ class TypeclasslessExamples : FreeSpec() {
     }
   }
 
-  fun <F> Applicative<F>.s() =
+  fun <F: KindType> Applicative<F>.s() =
     object : ApplicativeSyntax<F> {
       override fun AP(): Applicative<F> =
         this@s
@@ -59,9 +59,9 @@ class TypeclasslessExamples : FreeSpec() {
 
   // How to define a requirement on multiple typeclasses
 
-  interface ApplicativeAndIdentifySyntax<F> : ApplicativeSyntax<F>, IdentifySyntax<F>
+  interface ApplicativeAndIdentifySyntax<F: KindType> : ApplicativeSyntax<F>, IdentifySyntax<F>
 
-  fun <F> allSyntax(AP: Applicative<F>, ID: Identity<F>): ApplicativeAndIdentifySyntax<F> =
+  fun <F: KindType> allSyntax(AP: Applicative<F>, ID: Identity<F>): ApplicativeAndIdentifySyntax<F> =
     object : ApplicativeAndIdentifySyntax<F>, ApplicativeSyntax<F> by AP.s(), IdentifySyntax<F> by ID.s() {}
 
   ///////////////////////////////////
@@ -82,24 +82,24 @@ class TypeclasslessExamples : FreeSpec() {
   // Functions depending on syntax
 
   object ScopeOne {
-    fun <F> ApplicativeSyntax<F>.inScopeOne(): Kind<F, Int> =
+    fun <F: KindType> ApplicativeSyntax<F>.inScopeOne(): Kind<F, Int> =
       1.just()
   }
 
   object ScopeTwo {
-    fun <F> IdentifySyntax<F>.withIdentify(a: Kind<F, Int>): Kind<F, Int> =
+    fun <F: KindType> IdentifySyntax<F>.withIdentify(a: Kind<F, Int>): Kind<F, Int> =
       a.identify()
 
-    fun <F> ApplicativeSyntax<F>.withApplicative(): Kind<F, Int> =
+    fun <F: KindType> ApplicativeSyntax<F>.withApplicative(): Kind<F, Int> =
       1.just().map { inScopeOne() }.map { 1 }
 
-    fun <F> ApplicativeAndIdentifySyntax<F>.withAll(): Kind<F, Int> =
+    fun <F: KindType> ApplicativeAndIdentifySyntax<F>.withAll(): Kind<F, Int> =
       withIdentify(withApplicative()).identify().map(::identity)
   }
 
   // It only works inside classes if they extend the syntax, although it's inheritable!
 
-  open class Parent<F>(ALL_SYNTAX: ApplicativeAndIdentifySyntax<F>, val nest: Parent<F>?) : ApplicativeAndIdentifySyntax<F> by ALL_SYNTAX {
+  open class Parent<F: KindType>(ALL_SYNTAX: ApplicativeAndIdentifySyntax<F>, val nest: Parent<F>?) : ApplicativeAndIdentifySyntax<F> by ALL_SYNTAX {
     fun inClass() = withAll()
 
     fun ApplicativeAndIdentifySyntax<F>.insideClass() = withApplicative()
@@ -107,7 +107,7 @@ class TypeclasslessExamples : FreeSpec() {
     fun insideClassNested() = nest?.insideClass() ?: insideClass()
   }
 
-  class Child<F>(ALL_SYNTAX: ApplicativeAndIdentifySyntax<F>) : Parent<F>(ALL_SYNTAX, null) {
+  class Child<F: KindType>(ALL_SYNTAX: ApplicativeAndIdentifySyntax<F>) : Parent<F>(ALL_SYNTAX, null) {
     fun insideClassFromChild() = insideClass()
   }
 

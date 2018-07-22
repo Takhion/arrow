@@ -3,9 +3,10 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 
-interface Applicative<F> : Functor<F> {
+interface Applicative<F: KindType> : Functor<F> {
 
   fun <A> just(a: A): Kind<F, A>
 

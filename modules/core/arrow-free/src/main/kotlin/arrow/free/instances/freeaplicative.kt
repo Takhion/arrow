@@ -1,6 +1,7 @@
 package arrow.free.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.FunctionK
 import arrow.free.FreeApplicative
 import arrow.free.FreeApplicativePartialOf
@@ -12,12 +13,12 @@ import arrow.typeclasses.Functor
 import arrow.typeclasses.Monad
 
 @instance(FreeApplicative::class)
-interface FreeApplicativeFunctorInstance<S> : Functor<FreeApplicativePartialOf<S>> {
+interface FreeApplicativeFunctorInstance<S: KindType> : Functor<FreeApplicativePartialOf<S>> {
   override fun <A, B> Kind<FreeApplicativePartialOf<S>, A>.map(f: (A) -> B): FreeApplicative<S, B> = fix().map(f)
 }
 
 @instance(FreeApplicative::class)
-interface FreeApplicativeApplicativeInstance<S> : FreeApplicativeFunctorInstance<S>, Applicative<FreeApplicativePartialOf<S>> {
+interface FreeApplicativeApplicativeInstance<S: KindType> : FreeApplicativeFunctorInstance<S>, Applicative<FreeApplicativePartialOf<S>> {
   override fun <A> just(a: A): FreeApplicative<S, A> = FreeApplicative.just(a)
 
   override fun <A, B> Kind<FreeApplicativePartialOf<S>, A>.ap(ff: Kind<FreeApplicativePartialOf<S>, (A) -> B>): FreeApplicative<S, B> =
@@ -26,7 +27,7 @@ interface FreeApplicativeApplicativeInstance<S> : FreeApplicativeFunctorInstance
   override fun <A, B> Kind<FreeApplicativePartialOf<S>, A>.map(f: (A) -> B): FreeApplicative<S, B> = fix().map(f)
 }
 
-interface FreeApplicativeEq<F, G, A> : Eq<Kind<FreeApplicativePartialOf<F>, A>> {
+interface FreeApplicativeEq<F: KindType, G: KindType, A> : Eq<Kind<FreeApplicativePartialOf<F>, A>> {
   fun MG(): Monad<G>
 
   fun FK(): FunctionK<F, G>
@@ -36,19 +37,19 @@ interface FreeApplicativeEq<F, G, A> : Eq<Kind<FreeApplicativePartialOf<F>, A>> 
 }
 
 @Suppress("UNUSED_PARAMETER")
-fun <F, G, A> FreeApplicative.Companion.eq(FK: FunctionK<F, G>, MG: Monad<G>, dummy: Unit = Unit): FreeApplicativeEq<F, G, A> =
+fun <F: KindType, G: KindType, A> FreeApplicative.Companion.eq(FK: FunctionK<F, G>, MG: Monad<G>, dummy: Unit = Unit): FreeApplicativeEq<F, G, A> =
   object : FreeApplicativeEq<F, G, A> {
     override fun FK(): FunctionK<F, G> = FK
 
     override fun MG(): arrow.typeclasses.Monad<G> = MG
   }
 
-class FreeApplicativeContext<S> : FreeApplicativeApplicativeInstance<S>
+class FreeApplicativeContext<S: KindType> : FreeApplicativeApplicativeInstance<S>
 
-class FreeApplicativeContextPartiallyApplied<S> {
+class FreeApplicativeContextPartiallyApplied<S: KindType> {
   infix fun <A> extensions(f: FreeApplicativeContext<S>.() -> A): A =
     f(FreeApplicativeContext())
 }
 
-fun <S> ForFreeApplicative(): FreeApplicativeContextPartiallyApplied<S> =
+fun <S: KindType> ForFreeApplicative(): FreeApplicativeContextPartiallyApplied<S> =
   FreeApplicativeContextPartiallyApplied()

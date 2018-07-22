@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.*
 import arrow.test.UnitSpec
@@ -25,7 +26,7 @@ class DeferredKTest : UnitSpec() {
     a.unsafeAttemptSync() == b.unsafeAttemptSync()
   }
 
-  suspend fun <F, A> checkAwaitAll(FF: Functor<F>, T: Traverse<F>, v: Kind<F, A>) = FF.run {
+  suspend fun <F: KindType, A> checkAwaitAll(FF: Functor<F>, T: Traverse<F>, v: Kind<F, A>) = FF.run {
     v.map { DeferredK { it } }.awaitAll(T) == v
   }
 

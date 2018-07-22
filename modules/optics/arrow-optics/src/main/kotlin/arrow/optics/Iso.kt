@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -33,17 +34,17 @@ typealias IsoKindedJ<S, A> = PIsoKindedJ<S, S, A, A>
  * @param B the modified target of a [PIso]
  */
 @higherkind
-interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
+abstract class PIso<S, T, A, B> : PIsoOf<S, T, A, B>() {
 
   /**
    * Get the focus of a [PIso]
    */
-  fun get(s: S): A
+  abstract fun get(s: S): A
 
   /**
    * Get the modified focus of a [PIso]
    */
-  fun reverseGet(b: B): T
+  abstract fun reverseGet(b: B): T
 
   companion object {
 
@@ -58,7 +59,7 @@ interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
      * Invoke operator overload to create a [PIso] of type `S` with target `A`.
      * Can also be used to construct [Iso]
      */
-    operator fun <S, T, A, B> invoke(get: (S) -> (A), reverseGet: (B) -> T) = object : PIso<S, T, A, B> {
+    operator fun <S, T, A, B> invoke(get: (S) -> (A), reverseGet: (B) -> T) = object : PIso<S, T, A, B>() {
 
       override fun get(s: S): A = get(s)
 
@@ -69,7 +70,7 @@ interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
   /**
    * Lift a [PIso] to a Functor level
    */
-  fun <F> mapping(FF: Functor<F>): PIso<Kind<F, S>, Kind<F, T>, Kind<F, A>, Kind<F, B>> = FF.run {
+  fun <F: KindType> mapping(FF: Functor<F>): PIso<Kind<F, S>, Kind<F, T>, Kind<F, A>, Kind<F, B>> = FF.run {
     PIso(
       { fa -> fa.map(::get) },
       { fb -> fb.map(::reverseGet) }
@@ -79,14 +80,14 @@ interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
   /**
    * Modify polymorphically the target of a [PIso] with a Functor function
    */
-  fun <F> modifyF(FF: Functor<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FF.run {
+  fun <F: KindType> modifyF(FF: Functor<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FF.run {
     f(get(s)).map(::reverseGet)
   }
 
   /**
    * Lift a function [f] with a functor: `(A) -> Kind<F, B> to the context of `S`: `(S) -> Kind<F, T>`
    */
-  fun <F> liftF(FF: Functor<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = FF.run {
+  fun <F: KindType> liftF(FF: Functor<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = FF.run {
     { s -> f(get(s)).map(::reverseGet) }
   }
 
@@ -243,15 +244,15 @@ interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
   /**
    * View a [PIso] as a [Fold]
    */
-  fun asFold(): Fold<S, A> = object : Fold<S, A> {
+  fun asFold(): Fold<S, A> = object : Fold<S, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R = f(get(s))
   }
 
   /**
    * View a [PIso] as a [PTraversal]
    */
-  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B> {
-    override fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
+  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
       f(get(s)).map(this@PIso::reverseGet)
     }
   }
@@ -274,7 +275,7 @@ interface PIso<S, T, A, B> : PIsoOf<S, T, A, B> {
   /**
    * Lift a function [f] with a functor: `(A) -> Kind<F, B> to the context of `S`: `(S) -> Kind<F, T>`
    */
-  fun <F> liftF(FF: Functor<F>, dummy: Unit = Unit, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> =
+  fun <F: KindType> liftF(FF: Functor<F>, dummy: Unit = Unit, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> =
     liftF(FF) { a -> f(a) }
 
 }

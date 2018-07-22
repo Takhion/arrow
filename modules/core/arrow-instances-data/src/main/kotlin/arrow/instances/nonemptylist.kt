@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.data.*
@@ -119,7 +120,7 @@ interface NonEmptyListTraverseInstance : Traverse<ForNonEmptyList> {
   override fun <A, B> Kind<ForNonEmptyList, A>.map(f: (A) -> B): NonEmptyList<B> =
     fix().map(f)
 
-  override fun <G, A, B> Kind<ForNonEmptyList, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, NonEmptyList<B>> =
+  override fun <G: KindType, A, B> Kind<ForNonEmptyList, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, NonEmptyList<B>> =
     fix().traverse(AP, f)
 
   override fun <A, B> Kind<ForNonEmptyList, A>.foldLeft(b: B, f: (B, A) -> B): B =
@@ -138,7 +139,7 @@ interface NonEmptyListSemigroupKInstance : SemigroupK<ForNonEmptyList> {
     fix().nelCombineK(y)
 }
 
-fun <F, A> Reducible<F>.toNonEmptyList(fa: Kind<F, A>): NonEmptyList<A> =
+fun <F: KindType, A> Reducible<F>.toNonEmptyList(fa: Kind<F, A>): NonEmptyList<A> =
   fa.reduceRightTo({ a -> NonEmptyList.of(a) }, { a, lnel ->
     lnel.map { nonEmptyList -> NonEmptyList(a, listOf(nonEmptyList.head) + nonEmptyList.tail) }
   }).value()
@@ -148,5 +149,5 @@ object NonEmptyListContext : NonEmptyListBimonadInstance, NonEmptyListTraverseIn
     fix().map(f)
 }
 
-infix fun <A> ForNonEmptyList.Companion.extensions(f: NonEmptyListContext.() -> A): A =
+infix fun <A> ForNonEmptyList.extensions(f: NonEmptyListContext.() -> A): A =
   f(NonEmptyListContext)

@@ -1,8 +1,9 @@
 package arrow.generic
 
 import arrow.Kind
+import arrow.KindType
 
-interface ProductTypeClass<C> {
+interface ProductTypeClass<C: KindType> {
   /**
    * Given a type class instance for `H`, and a type class instance for a
    * product, produce a type class instance for the product prepended with `H`.
@@ -21,7 +22,7 @@ interface ProductTypeClass<C> {
   fun <F, G> project(instance: () -> Kind<C, G>, to: (F) -> G, from: (G) -> F): Kind<C, F>
 }
 
-interface ProductTypeClassCompanion<C> {
+interface ProductTypeClassCompanion<C: KindType> {
 
   val typeClass: ProductTypeClass<C>
 
@@ -41,7 +42,7 @@ interface ProductTypeClassCompanion<C> {
  * Refines ProductTypeClass with the addition of runtime `String` labels
  * corresponding to the names of the product elements.
  */
-interface LabeledProductTypeClass<C> {
+interface LabeledProductTypeClass<C: KindType> {
   /**
    * Given a type class instance for `H`, and a type class instance for a
    * product, produce a type class instance for the product prepended with `H`.

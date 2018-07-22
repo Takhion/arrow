@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -33,17 +34,17 @@ typealias OptionalKindedJ<S, A> = POptionalKindedJ<S, S, A, A>
  * @param B the modified focus of a [POptional]
  */
 @higherkind
-interface POptional<S, T, A, B> : POptionalOf<S, T, A, B> {
+abstract class POptional<S, T, A, B> : POptionalOf<S, T, A, B>() {
 
   /**
    * Get the modified source of a [POptional]
    */
-  fun set(s: S, b: B): T
+  abstract fun set(s: S, b: B): T
 
   /**
    * Get the focus of a [POptional] or return the original value while allowing the type to change if it does not match
    */
-  fun getOrModify(s: S): Either<T, A>
+  abstract fun getOrModify(s: S): Either<T, A>
 
   companion object {
 
@@ -61,7 +62,7 @@ interface POptional<S, T, A, B> : POptionalOf<S, T, A, B> {
      * Invoke operator overload to create a [POptional] of type `S` with focus `A`.
      * Can also be used to construct [Optional]
      */
-    operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, set: (B) -> (S) -> T): POptional<S, T, A, B> = object : POptional<S, T, A, B> {
+    operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, set: (B) -> (S) -> T): POptional<S, T, A, B> = object : POptional<S, T, A, B>() {
       override fun getOrModify(s: S): Either<T, A> = getOrModify(s)
 
       override fun set(s: S, b: B): T = set(b)(s)
@@ -89,7 +90,7 @@ interface POptional<S, T, A, B> : POptionalOf<S, T, A, B> {
   /**
    * Modify the focus of a [POptional] with an Applicative function [f]
    */
-  fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
+  fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
     getOrModify(s).fold(
       ::just,
       { f(it).map({ set(s, it) }) }
@@ -99,7 +100,7 @@ interface POptional<S, T, A, B> : POptionalOf<S, T, A, B> {
   /**
    * Lift a function [f]: `(A) -> Kind<F, B> to the context of `S`: `(S) -> Kind<F, T>`
    */
-  fun <F> liftF(FA: Applicative<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = { s ->
+  fun <F: KindType> liftF(FA: Applicative<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = { s ->
     modifyF(FA, s, f)
   }
 
@@ -221,15 +222,15 @@ interface POptional<S, T, A, B> : POptionalOf<S, T, A, B> {
   /**
    * View a [POptional] as a [Fold]
    */
-  fun asFold() = object : Fold<S, A> {
+  fun asFold() = object : Fold<S, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R = getOption(s).map(f).getOrElse(M::empty)
   }
 
   /**
    * View a [POptional] as a [PTraversal]
    */
-  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B> {
-    override fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> =
+  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> =
       this@POptional.modifyF(FA, s, f)
   }
 

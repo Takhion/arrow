@@ -1,13 +1,14 @@
 package arrow.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.core.Tuple2
 import arrow.core.identity
 import kotlin.coroutines.experimental.startCoroutine
 
-interface Monad<F> : Applicative<F> {
+interface Monad<F: KindType> : Applicative<F> {
 
   fun <A, B> Kind<F, A>.flatMap(f: (A) -> Kind<F, B>): Kind<F, B>
 
@@ -46,7 +47,7 @@ interface Monad<F> : Applicative<F> {
  * A coroutine is initiated and suspended inside [MonadErrorContinuation] yielding to [Monad.flatMap]. Once all the flatMap binds are completed
  * the underlying monad is returned from the act of executing the coroutine
  */
-fun <F, B> Monad<F>.binding(c: suspend MonadContinuation<F, *>.() -> B): Kind<F, B> {
+fun <F: KindType, B> Monad<F>.binding(c: suspend MonadContinuation<F, *>.() -> B): Kind<F, B> {
   val continuation = MonadContinuation<F, B>(this)
   val wrapReturn: suspend MonadContinuation<F, *>.() -> Kind<F, B> = { just(c()) }
   wrapReturn.startCoroutine(continuation, continuation)

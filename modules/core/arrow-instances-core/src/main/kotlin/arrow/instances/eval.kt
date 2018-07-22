@@ -79,5 +79,5 @@ interface EvalBimonadInstance : Bimonad<ForEval> {
 
 object EvalContext : EvalBimonadInstance
 
-infix fun <L> ForEval.Companion.extensions(f: EvalContext.() -> L): L =
+infix fun <L> ForEval.extensions(f: EvalContext.() -> L): L =
   f(EvalContext)

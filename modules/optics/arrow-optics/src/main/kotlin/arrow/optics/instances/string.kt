@@ -12,8 +12,8 @@ import arrow.optics.typeclasses.*
  * @receiver [String.Companion] to make it statically available.
  * @return [Traversal] with source [String] and foci every [Char] in the source.
  */
-fun String.Companion.traversal(): Traversal<String, Char> = object : Traversal<String, Char> {
-  override fun <F> modifyF(FA: Applicative<F>, s: String, f: (Char) -> Kind<F, Char>): Kind<F, String> = FA.run {
+fun String.Companion.traversal(): Traversal<String, Char> = object : Traversal<String, Char>() {
+  override fun <F: KindType> modifyF(FA: Applicative<F>, s: String, f: (Char) -> Kind<F, Char>): Kind<F, String> = FA.run {
     s.toList().k().traverse(FA, f).map { it.joinToString(separator = "") }
   }
 }

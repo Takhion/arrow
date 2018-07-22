@@ -104,7 +104,7 @@ class ProductFileGenerator(
   private fun applicativeExtensions(product: AnnotatedGeneric): String =
     if (product.hasTupleFocus)
       """|
-                |fun <F> arrow.typeclasses.Applicative<F>.mapTo${product.sourceSimpleName}${kindedProperties("F", product)}: arrow.Kind<F, ${product.sourceClassName}> =
+                |fun <F: arrow.KindType> arrow.typeclasses.Applicative<F>.mapTo${product.sourceSimpleName}${kindedProperties("F", product)}: arrow.Kind<F, ${product.sourceClassName}> =
                 |    this.map(${product.targets.joinToString(", ") { it.paramName }}, { it.to${product.sourceSimpleName}() })
                 |
                 |""".trimMargin()

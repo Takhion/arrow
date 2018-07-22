@@ -1,6 +1,7 @@
 package arrow.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.data.OptionT
 import arrow.data.OptionTOf
@@ -10,7 +11,7 @@ import arrow.instance
 import arrow.typeclasses.*
 
 @instance(OptionT::class)
-interface OptionTFunctorInstance<F> : Functor<OptionTPartialOf<F>> {
+interface OptionTFunctorInstance<F: KindType> : Functor<OptionTPartialOf<F>> {
 
   fun FF(): Functor<F>
 
@@ -19,7 +20,7 @@ interface OptionTFunctorInstance<F> : Functor<OptionTPartialOf<F>> {
 }
 
 @instance(OptionT::class)
-interface OptionTApplicativeInstance<F> : OptionTFunctorInstance<F>, Applicative<OptionTPartialOf<F>> {
+interface OptionTApplicativeInstance<F: KindType> : OptionTFunctorInstance<F>, Applicative<OptionTPartialOf<F>> {
 
   override fun FF(): Monad<F>
 
@@ -32,7 +33,7 @@ interface OptionTApplicativeInstance<F> : OptionTFunctorInstance<F>, Applicative
 }
 
 @instance(OptionT::class)
-interface OptionTMonadInstance<F> : OptionTApplicativeInstance<F>, Monad<OptionTPartialOf<F>> {
+interface OptionTMonadInstance<F: KindType> : OptionTApplicativeInstance<F>, Monad<OptionTPartialOf<F>> {
 
   override fun <A, B> Kind<OptionTPartialOf<F>, A>.map(f: (A) -> B): OptionT<F, B> = fix().map(FF(), f)
 
@@ -46,22 +47,22 @@ interface OptionTMonadInstance<F> : OptionTApplicativeInstance<F>, Monad<OptionT
 
 }
 
-fun <F, A, B> OptionTOf<F, A>.foldLeft(FF: Foldable<F>, b: B, f: (B, A) -> B): B = FF.compose(Option.foldable()).foldLC(fix().value, b, f)
+fun <F: KindType, A, B> OptionTOf<F, A>.foldLeft(FF: Foldable<F>, b: B, f: (B, A) -> B): B = FF.compose(Option.foldable()).foldLC(fix().value, b, f)
 
-fun <F, A, B> OptionTOf<F, A>.foldRight(FF: Foldable<F>, lb: Eval<B>, f: (A, Eval<B>) -> Eval<B>): Eval<B> = FF.compose(Option.foldable()).run {
+fun <F: KindType, A, B> OptionTOf<F, A>.foldRight(FF: Foldable<F>, lb: Eval<B>, f: (A, Eval<B>) -> Eval<B>): Eval<B> = FF.compose(Option.foldable()).run {
   fix().value.foldRC(lb, f)
 }
 
-fun <F, G, A, B> OptionTOf<F, A>.traverse(FF: Traverse<F>, GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, OptionT<F, B>> {
+fun <F: KindType, G: KindType, A, B> OptionTOf<F, A>.traverse(FF: Traverse<F>, GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, OptionT<F, B>> {
   val fa = ComposedTraverse(FF, Option.traverse(), Option.applicative()).traverseC(fix().value, f, GA)
   return GA.run { fa.map({ OptionT(FF.run { it.unnest().map({ it.fix() }) }) }) }
 }
 
-fun <F, G, A> OptionTOf<F, Kind<G, A>>.sequence(FF: Traverse<F>, GA: Applicative<G>): Kind<G, OptionT<F, A>> =
+fun <F: KindType, G: KindType, A> OptionTOf<F, Kind<G, A>>.sequence(FF: Traverse<F>, GA: Applicative<G>): Kind<G, OptionT<F, A>> =
   traverse(FF, GA, ::identity)
 
 @instance(OptionT::class)
-interface OptionTFoldableInstance<F> : Foldable<OptionTPartialOf<F>> {
+interface OptionTFoldableInstance<F: KindType> : Foldable<OptionTPartialOf<F>> {
 
   fun FFF(): Foldable<F>
 
@@ -74,17 +75,17 @@ interface OptionTFoldableInstance<F> : Foldable<OptionTPartialOf<F>> {
 }
 
 @instance(OptionT::class)
-interface OptionTTraverseInstance<F> : OptionTFoldableInstance<F>, Traverse<OptionTPartialOf<F>> {
+interface OptionTTraverseInstance<F: KindType> : OptionTFoldableInstance<F>, Traverse<OptionTPartialOf<F>> {
 
   override fun FFF(): Traverse<F>
 
-  override fun <G, A, B> Kind<OptionTPartialOf<F>, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, OptionT<F, B>> =
+  override fun <G: KindType, A, B> Kind<OptionTPartialOf<F>, A>.traverse(AP: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, OptionT<F, B>> =
     fix().traverse(FFF(), AP, f)
 
 }
 
 @instance(OptionT::class)
-interface OptionTSemigroupKInstance<F> : SemigroupK<OptionTPartialOf<F>> {
+interface OptionTSemigroupKInstance<F: KindType> : SemigroupK<OptionTPartialOf<F>> {
 
   fun FF(): Monad<F>
 
@@ -92,11 +93,11 @@ interface OptionTSemigroupKInstance<F> : SemigroupK<OptionTPartialOf<F>> {
 }
 
 @instance(OptionT::class)
-interface OptionTMonoidKInstance<F> : MonoidK<OptionTPartialOf<F>>, OptionTSemigroupKInstance<F> {
+interface OptionTMonoidKInstance<F: KindType> : MonoidK<OptionTPartialOf<F>>, OptionTSemigroupKInstance<F> {
   override fun <A> empty(): OptionT<F, A> = OptionT(FF().just(None))
 }
 
-class OptionTContext<F>(val MF: Monad<F>) : OptionTMonadInstance<F>, OptionTMonoidKInstance<F> {
+class OptionTContext<F: KindType>(val MF: Monad<F>) : OptionTMonadInstance<F>, OptionTMonoidKInstance<F> {
 
   override fun FF(): Monad<F> = MF
 
@@ -104,10 +105,10 @@ class OptionTContext<F>(val MF: Monad<F>) : OptionTMonadInstance<F>, OptionTMono
     fix().map(f)
 }
 
-class OptionTContextPartiallyApplied<F>(val MF: Monad<F>) {
+class OptionTContextPartiallyApplied<F: KindType>(val MF: Monad<F>) {
   infix fun <A> extensions(f: OptionTContext<F>.() -> A): A =
     f(OptionTContext(MF))
 }
 
-fun <F> ForOptionT(MF: Monad<F>): OptionTContextPartiallyApplied<F> =
+fun <F: KindType> ForOptionT(MF: Monad<F>): OptionTContextPartiallyApplied<F> =
   OptionTContextPartiallyApplied(MF)

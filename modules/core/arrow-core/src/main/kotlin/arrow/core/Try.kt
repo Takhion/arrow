@@ -13,7 +13,7 @@ typealias Success<A> = Try.Success<A>
  * Port of https://github.com/scala/scala/blob/v2.12.1/src/library/scala/util/Try.scala
  */
 @higherkind
-sealed class Try<out A> : TryOf<A> {
+sealed class Try<out A> : TryOf<A>() {
 
   companion object {
 

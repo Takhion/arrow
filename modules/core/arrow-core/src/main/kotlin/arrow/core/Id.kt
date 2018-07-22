@@ -5,7 +5,7 @@ import arrow.higherkind
 fun <A> IdOf<A>.value(): A = this.fix().value
 
 @higherkind
-data class Id<out A>(val value: A) : IdOf<A> {
+data class Id<out A>(val value: A) : IdOf<A>() {
 
   inline fun <B> map(f: (A) -> B): Id<B> = Id(f(value))
 

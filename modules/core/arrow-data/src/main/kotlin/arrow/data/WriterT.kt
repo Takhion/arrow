@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Tuple2
 import arrow.core.toT
@@ -8,53 +9,53 @@ import arrow.higherkind
 import arrow.typeclasses.*
 
 @Suppress("UNCHECKED_CAST")
-inline fun <F, W, A> WriterTOf<F, W, A>.value(): Kind<F, Tuple2<W, A>> = this.fix().value
+inline fun <F: KindType, W, A> WriterTOf<F, W, A>.value(): Kind<F, Tuple2<W, A>> = this.fix().value
 
 @higherkind
-data class WriterT<F, W, A>(val value: Kind<F, Tuple2<W, A>>) : WriterTOf<F, W, A>, WriterTKindedJ<F, W, A> {
+data class WriterT<F: KindType, W, A>(val value: Kind<F, Tuple2<W, A>>) : WriterTOf<F, W, A>(), WriterTKindedJ<F, W, A> {
 
   companion object {
 
-    fun <F, W, A> just(AF: Applicative<F>, MM: Monoid<W>, a: A) =
+    fun <F: KindType, W, A> just(AF: Applicative<F>, MM: Monoid<W>, a: A) =
       WriterT(AF.just(Tuple2(MM.empty(), a)))
 
-    fun <F, W, A> both(MF: Monad<F>, w: W, a: A) = WriterT(MF.just(Tuple2(w, a)))
+    fun <F: KindType, W, A> both(MF: Monad<F>, w: W, a: A) = WriterT(MF.just(Tuple2(w, a)))
 
-    fun <F, W, A> fromTuple(MF: Monad<F>, z: Tuple2<W, A>) = WriterT(MF.just(z))
+    fun <F: KindType, W, A> fromTuple(MF: Monad<F>, z: Tuple2<W, A>) = WriterT(MF.just(z))
 
-    operator fun <F, W, A> invoke(value: Kind<F, Tuple2<W, A>>): WriterT<F, W, A> = WriterT(value)
+    operator fun <F: KindType, W, A> invoke(value: Kind<F, Tuple2<W, A>>): WriterT<F, W, A> = WriterT(value)
 
-    fun <F, W, A> putT(FF: Functor<F>, vf: Kind<F, A>, w: W): WriterT<F, W, A> = FF.run {
+    fun <F: KindType, W, A> putT(FF: Functor<F>, vf: Kind<F, A>, w: W): WriterT<F, W, A> = FF.run {
       WriterT(vf.map({ v -> Tuple2(w, v) }))
     }
 
-    fun <F, W, A> put(AF: Applicative<F>, a: A, w: W): WriterT<F, W, A> =
+    fun <F: KindType, W, A> put(AF: Applicative<F>, a: A, w: W): WriterT<F, W, A> =
       putT(AF, AF.just(a), w)
 
-    fun <F, W, A> putT2(FF: Functor<F>, vf: Kind<F, A>, w: W): WriterT<F, W, A> = FF.run {
+    fun <F: KindType, W, A> putT2(FF: Functor<F>, vf: Kind<F, A>, w: W): WriterT<F, W, A> = FF.run {
       WriterT(vf.map({ v -> Tuple2(w, v) }))
     }
 
-    fun <F, W, A> put2(AF: Applicative<F>, a: A, w: W): WriterT<F, W, A> =
+    fun <F: KindType, W, A> put2(AF: Applicative<F>, a: A, w: W): WriterT<F, W, A> =
       putT2(AF, AF.just(a), w)
 
-    fun <F, W> tell(AF: Applicative<F>, l: W): WriterT<F, W, Unit> = put(AF, Unit, l)
+    fun <F: KindType, W> tell(AF: Applicative<F>, l: W): WriterT<F, W, Unit> = put(AF, Unit, l)
 
-    fun <F, W> tell2(AF: Applicative<F>, l: W): WriterT<F, W, Unit> = put2(AF, Unit, l)
+    fun <F: KindType, W> tell2(AF: Applicative<F>, l: W): WriterT<F, W, Unit> = put2(AF, Unit, l)
 
-    fun <F, W, A> value(AF: Applicative<F>, monoidW: Monoid<W>, v: A):
+    fun <F: KindType, W, A> value(AF: Applicative<F>, monoidW: Monoid<W>, v: A):
       WriterT<F, W, A> = put(AF, v, monoidW.empty())
 
-    fun <F, W, A> valueT(AF: Applicative<F>, monoidW: Monoid<W>, vf: Kind<F, A>): WriterT<F, W, A> =
+    fun <F: KindType, W, A> valueT(AF: Applicative<F>, monoidW: Monoid<W>, vf: Kind<F, A>): WriterT<F, W, A> =
       putT(AF, vf, monoidW.empty())
 
-    fun <F, W, A> empty(MMF: MonoidK<F>): WriterTOf<F, W, A> = WriterT(MMF.empty())
+    fun <F: KindType, W, A> empty(MMF: MonoidK<F>): WriterTOf<F, W, A> = WriterT(MMF.empty())
 
-    fun <F, W, A> pass(MF: Monad<F>, fa: Kind<WriterTPartialOf<F, W>, Tuple2<(W) -> W, A>>): WriterT<F, W, A> = MF.run {
+    fun <F: KindType, W, A> pass(MF: Monad<F>, fa: Kind<WriterTPartialOf<F, W>, Tuple2<(W) -> W, A>>): WriterT<F, W, A> = MF.run {
       WriterT(fa.fix().content(this).flatMap({ tuple2FA -> fa.fix().write(this).map({ l -> Tuple2(tuple2FA.a(l), tuple2FA.b) }) }))
     }
 
-    fun <F, W, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> Kind<WriterTPartialOf<F, W>, Either<A, B>>): WriterT<F, W, B> = MF.run {
+    fun <F: KindType, W, A, B> tailRecM(MF: Monad<F>, a: A, f: (A) -> Kind<WriterTPartialOf<F, W>, Either<A, B>>): WriterT<F, W, B> = MF.run {
       WriterT(tailRecM(a, {
         f(it).fix().value.map() {
           val value = it.b

@@ -15,7 +15,7 @@ fun <A> Single<A>.k(): SingleK<A> = SingleK(this)
 fun <A> SingleKOf<A>.value(): Single<A> = this.fix().single
 
 @higherkind
-data class SingleK<A>(val single: Single<A>) : SingleKOf<A>, SingleKKindedJ<A> {
+data class SingleK<A>(val single: Single<A>) : SingleKOf<A>(), SingleKKindedJ<A> {
 
   fun <B> map(f: (A) -> B): SingleK<B> =
     single.map(f).k()

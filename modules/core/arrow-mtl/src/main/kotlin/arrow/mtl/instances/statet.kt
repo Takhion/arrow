@@ -1,6 +1,7 @@
 package arrow.mtl.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.toT
 import arrow.data.StateT
 import arrow.data.StateTPartialOf
@@ -15,7 +16,7 @@ import arrow.typeclasses.MonadError
 import arrow.typeclasses.SemigroupK
 
 @instance(StateT::class)
-interface StateTMonadStateInstance<F, S> : StateTMonadInstance<F, S>, MonadState<StateTPartialOf<F, S>, S> {
+interface StateTMonadStateInstance<F: KindType, S> : StateTMonadInstance<F, S>, MonadState<StateTPartialOf<F, S>, S> {
 
   override fun get(): StateT<F, S, S> = StateT.get(FF())
 
@@ -24,7 +25,7 @@ interface StateTMonadStateInstance<F, S> : StateTMonadInstance<F, S>, MonadState
 }
 
 @instance(StateT::class)
-interface StateTMonadCombineInstance<F, S> : MonadCombine<StateTPartialOf<F, S>>, StateTMonadInstance<F, S>, StateTSemigroupKInstance<F, S> {
+interface StateTMonadCombineInstance<F: KindType, S> : MonadCombine<StateTPartialOf<F, S>>, StateTMonadInstance<F, S>, StateTSemigroupKInstance<F, S> {
 
   fun MC(): MonadCombine<F>
 
@@ -39,14 +40,14 @@ interface StateTMonadCombineInstance<F, S> : MonadCombine<StateTPartialOf<F, S>>
   }
 }
 
-class StateTMtlContext<F, S, E>(val ME: MonadError<F, E>) : StateTMonadStateInstance<F, S>, StateTMonadErrorInstance<F, S, E> {
+class StateTMtlContext<F: KindType, S, E>(val ME: MonadError<F, E>) : StateTMonadStateInstance<F, S>, StateTMonadErrorInstance<F, S, E> {
   override fun FF(): MonadError<F, E> = ME
 }
 
-class StateTMtlContextPartiallyApplied<F, S, E>(val ME: MonadError<F, E>) {
+class StateTMtlContextPartiallyApplied<F: KindType, S, E>(val ME: MonadError<F, E>) {
   infix fun <A> extensions(f: StateTMtlContext<F, S, E>.() -> A): A =
     f(StateTMtlContext(ME))
 }
 
-fun <F, S, E> ForStateT(ME: MonadError<F, E>): StateTMtlContextPartiallyApplied<F, S, E> =
+fun <F: KindType, S, E> ForStateT(ME: MonadError<F, E>): StateTMtlContextPartiallyApplied<F, S, E> =
   StateTMtlContextPartiallyApplied(ME)

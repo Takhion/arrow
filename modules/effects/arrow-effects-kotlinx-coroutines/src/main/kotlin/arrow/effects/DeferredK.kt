@@ -1,6 +1,7 @@
 package arrow.effects
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.effects.typeclasses.Proc
 import arrow.higherkind
@@ -14,7 +15,7 @@ fun <A> Deferred<A>.k(): DeferredK<A> =
 fun <A> DeferredKOf<A>.value(): Deferred<A> = this.fix().deferred
 
 @higherkind
-data class DeferredK<out A>(val deferred: Deferred<A>) : DeferredKOf<A>, Deferred<A> by deferred {
+data class DeferredK<out A>(val deferred: Deferred<A>) : DeferredKOf<A>(), Deferred<A> by deferred {
 
   fun <B> map(f: (A) -> B): DeferredK<B> =
     flatMap { a: A -> just(f(a)) }
@@ -118,6 +119,6 @@ fun <A> DeferredKOf<A>.unsafeRunAsync(cb: (Either<Throwable, A>) -> Unit): Unit 
 
 suspend fun <A> DeferredKOf<A>.await(): A = this.fix().await()
 
-suspend fun <F, A> Kind<F, DeferredKOf<A>>.awaitAll(T: Traverse<F>): Kind<F, A> = T.run {
+suspend fun <F: KindType, A> Kind<F, DeferredKOf<A>>.awaitAll(T: Traverse<F>): Kind<F, A> = T.run {
     this@awaitAll.sequence(DeferredK.applicative()).await()
 }

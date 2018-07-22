@@ -1,6 +1,7 @@
 package arrow.free
 
 import arrow.Kind
+import arrow.Witness
 import arrow.core.*
 import arrow.data.NonEmptyList
 import arrow.data.fix
@@ -14,9 +15,9 @@ import io.kotlintest.KTestJUnitRunner
 import io.kotlintest.matchers.shouldBe
 import org.junit.runner.RunWith
 
-sealed class Ops<out A> : Kind<Ops.F, A> {
+sealed class Ops<out A> : Kind<Ops.F, A>() {
 
-  class F private constructor()
+  object F : Witness<Ops<*>>()
 
   data class Value(val a: Int) : Ops<Int>()
   data class Add(val a: Int, val y: Int) : Ops<Int>()

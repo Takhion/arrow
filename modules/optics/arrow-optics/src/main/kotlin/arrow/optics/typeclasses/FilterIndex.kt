@@ -1,6 +1,7 @@
 package arrow.optics.typeclasses
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Predicate
 import arrow.core.Tuple2
 import arrow.optics.Iso
@@ -35,9 +36,9 @@ interface FilterIndex<S, I, A> {
     /**
      * Create an instance of [FilterIndex] from a [Traverse] and a function `Kind<S, A>) -> Kind<S, Tuple2<A, Int>>`
      */
-    fun <S, A> fromTraverse(zipWithIndex: (Kind<S, A>) -> Kind<S, Tuple2<A, Int>>, traverse: Traverse<S>): FilterIndex<Kind<S, A>, Int, A> = object : FilterIndex<Kind<S, A>, Int, A> {
-      override fun filter(p: Predicate<Int>): Traversal<Kind<S, A>, A> = object : Traversal<Kind<S, A>, A> {
-        override fun <F> modifyF(FA: Applicative<F>, s: Kind<S, A>, f: (A) -> Kind<F, A>): Kind<F, Kind<S, A>> =
+    fun <S: KindType, A> fromTraverse(zipWithIndex: (Kind<S, A>) -> Kind<S, Tuple2<A, Int>>, traverse: Traverse<S>): FilterIndex<Kind<S, A>, Int, A> = object : FilterIndex<Kind<S, A>, Int, A> {
+      override fun filter(p: Predicate<Int>): Traversal<Kind<S, A>, A> = object : Traversal<Kind<S, A>, A>() {
+        override fun <F: KindType> modifyF(FA: Applicative<F>, s: Kind<S, A>, f: (A) -> Kind<F, A>): Kind<F, Kind<S, A>> =
           traverse.run {
             FA.run {
               zipWithIndex(s).traverse(this, { (a, j) ->

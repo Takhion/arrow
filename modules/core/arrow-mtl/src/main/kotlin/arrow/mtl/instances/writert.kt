@@ -1,6 +1,7 @@
 package arrow.mtl.instances
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Tuple2
 import arrow.data.WriterT
 import arrow.data.WriterTOf
@@ -14,14 +15,14 @@ import arrow.typeclasses.Monad
 import arrow.typeclasses.Monoid
 
 @instance(WriterT::class)
-interface WriterTMonadFilterInstance<F, W> : WriterTMonadInstance<F, W>, MonadFilter<WriterTPartialOf<F, W>> {
+interface WriterTMonadFilterInstance<F: KindType, W> : WriterTMonadInstance<F, W>, MonadFilter<WriterTPartialOf<F, W>> {
   override fun FF(): MonadFilter<F>
 
   override fun <A> empty(): WriterTOf<F, W, A> = WriterT(FF().empty())
 }
 
 @instance(WriterT::class)
-interface WriterTMonadWriterInstance<F, W> : MonadWriter<WriterTPartialOf<F, W>, W>, WriterTMonadInstance<F, W> {
+interface WriterTMonadWriterInstance<F: KindType, W> : MonadWriter<WriterTPartialOf<F, W>, W>, WriterTMonadInstance<F, W> {
 
   override fun <A> Kind<WriterTPartialOf<F, W>, A>.listen(): Kind<WriterTPartialOf<F, W>, Tuple2<W, A>> = FF().run {
     WriterT(fix().content(this).flatMap({ a -> fix().write(this).map({ l -> Tuple2(l, Tuple2(l, a)) }) }))
@@ -37,16 +38,16 @@ interface WriterTMonadWriterInstance<F, W> : MonadWriter<WriterTPartialOf<F, W>,
 
 }
 
-class WriterTMtlContext<F, W>(val MF: Monad<F>, val MW: Monoid<W>) : WriterTMonadWriterInstance<F, W> {
+class WriterTMtlContext<F: KindType, W>(val MF: Monad<F>, val MW: Monoid<W>) : WriterTMonadWriterInstance<F, W> {
   override fun FF(): Monad<F> = MF
 
   override fun MM(): Monoid<W> = MW
 }
 
-class WriterTMtlContextPartiallyApplied<F, W>(val MF: Monad<F>, val MW: Monoid<W>) {
+class WriterTMtlContextPartiallyApplied<F: KindType, W>(val MF: Monad<F>, val MW: Monoid<W>) {
   infix fun <A> extensions(f: WriterTMtlContext<F, W>.() -> A): A =
     f(WriterTMtlContext(MF, MW))
 }
 
-fun <F, W> ForWriterT(MF: Monad<F>, MW: Monoid<W>): WriterTMtlContextPartiallyApplied<F, W> =
+fun <F: KindType, W> ForWriterT(MF: Monad<F>, MW: Monoid<W>): WriterTMtlContextPartiallyApplied<F, W> =
   WriterTMtlContextPartiallyApplied(MF, MW)

@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.*
 import arrow.higherkind
 import arrow.typeclasses.Applicative
@@ -35,10 +36,10 @@ typealias PrismKindedJ<S, A> = PPrismKindedJ<S, S, A, A>
  * @param B the modified focus of a [PPrism]
  */
 @higherkind
-interface PPrism<S, T, A, B> : PPrismOf<S, T, A, B> {
+abstract class PPrism<S, T, A, B> : PPrismOf<S, T, A, B>() {
 
-  fun getOrModify(s: S): Either<T, A>
-  fun reverseGet(b: B): T
+  abstract fun getOrModify(s: S): Either<T, A>
+  abstract fun reverseGet(b: B): T
 
   companion object {
 
@@ -48,7 +49,7 @@ interface PPrism<S, T, A, B> : PPrismOf<S, T, A, B> {
      * Invoke operator overload to create a [PPrism] of type `S` with focus `A`.
      * Can also be used to construct [Prism]
      */
-    operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, reverseGet: (B) -> T) = object : PPrism<S, T, A, B> {
+    operator fun <S, T, A, B> invoke(getOrModify: (S) -> Either<T, A>, reverseGet: (B) -> T) = object : PPrism<S, T, A, B>() {
       override fun getOrModify(s: S): Either<T, A> = getOrModify(s)
 
       override fun reverseGet(b: B): T = reverseGet(b)
@@ -85,7 +86,7 @@ interface PPrism<S, T, A, B> : PPrismOf<S, T, A, B> {
   /**
    * Modify the focus of a [PPrism] with an [Applicative] function
    */
-  fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
+  fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
     getOrModify(s).fold(
       ::just,
       { f(it).map(::reverseGet) }
@@ -95,7 +96,7 @@ interface PPrism<S, T, A, B> : PPrismOf<S, T, A, B> {
   /**
    * Modify the focus of a [PPrism] with an [Applicative] function
    */
-  fun <F> liftF(FA: Applicative<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = FA.run {
+  fun <F: KindType> liftF(FA: Applicative<F>, f: (A) -> Kind<F, B>): (S) -> Kind<F, T> = FA.run {
     { s ->
       getOrModify(s).fold(
         ::just,
@@ -216,15 +217,15 @@ interface PPrism<S, T, A, B> : PPrismOf<S, T, A, B> {
   /**
    * View a [PPrism] as a [Fold]
    */
-  fun asFold(): Fold<S, A> = object : Fold<S, A> {
+  fun asFold(): Fold<S, A> = object : Fold<S, A>() {
     override fun <R> foldMap(M: Monoid<R>, s: S, f: (A) -> R): R = getOption(s).map(f).getOrElse(M::empty)
   }
 
   /**
    * View a [PPrism] as a [PTraversal]
    */
-  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B> {
-    override fun <F> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
+  fun asTraversal(): PTraversal<S, T, A, B> = object : PTraversal<S, T, A, B>() {
+    override fun <F: KindType> modifyF(FA: Applicative<F>, s: S, f: (A) -> Kind<F, B>): Kind<F, T> = FA.run {
       getOrModify(s).fold(
         ::just,
         { f(it).map(this@PPrism::reverseGet) }

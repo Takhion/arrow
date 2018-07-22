@@ -1,6 +1,7 @@
 package arrow.optics
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.higherkind
 import arrow.typeclasses.Functor
@@ -32,17 +33,17 @@ typealias SetterKindedJ<S, A> = PSetterKindedJ<S, S, A, A>
  * @param B the modified focus of a [PSetter]
  */
 @higherkind
-interface PSetter<S, T, A, B> : PSetterOf<S, T, A, B> {
+abstract class PSetter<S, T, A, B> : PSetterOf<S, T, A, B>() {
 
   /**
    * Modify polymorphically the focus of a [PSetter] with a function [f].
    */
-  fun modify(s: S, f: (A) -> B): T
+  abstract fun modify(s: S, f: (A) -> B): T
 
   /**
    * Set polymorphically the focus of a [PSetter] with a value [b].
    */
-  fun set(s: S, b: B): T
+  abstract fun set(s: S, b: B): T
 
   companion object {
 
@@ -57,7 +58,7 @@ interface PSetter<S, T, A, B> : PSetterOf<S, T, A, B> {
      * Invoke operator overload to create a [PSetter] of type `S` with target `A`.
      * Can also be used to construct [Setter]
      */
-    operator fun <S, T, A, B> invoke(modify: ((A) -> B) -> (S) -> T): PSetter<S, T, A, B> = object : PSetter<S, T, A, B> {
+    operator fun <S, T, A, B> invoke(modify: ((A) -> B) -> (S) -> T): PSetter<S, T, A, B> = object : PSetter<S, T, A, B>() {
       override fun modify(s: S, f: (A) -> B): T = modify(f)(s)
 
       override fun set(s: S, b: B): T = modify(s) { b }
@@ -66,7 +67,7 @@ interface PSetter<S, T, A, B> : PSetterOf<S, T, A, B> {
     /**
      * Create a [PSetter] from a [arrow.Functor]
      */
-    fun <F, A, B> fromFunctor(FF: Functor<F>): PSetter<Kind<F, A>, Kind<F, B>, A, B> = FF.run {
+    fun <F: KindType, A, B> fromFunctor(FF: Functor<F>): PSetter<Kind<F, A>, Kind<F, B>, A, B> = FF.run {
       PSetter { f ->
         { fs: Kind<F, A> -> fs.map(f) }
       }

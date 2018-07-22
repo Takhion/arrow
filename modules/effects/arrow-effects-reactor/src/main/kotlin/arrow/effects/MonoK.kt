@@ -16,7 +16,7 @@ fun <A> MonoKOf<A>.value(): Mono<A> =
     this.fix().mono
 
 @higherkind
-data class MonoK<A>(val mono: Mono<A>) : MonoKOf<A>, MonoKKindedJ<A> {
+data class MonoK<A>(val mono: Mono<A>) : MonoKOf<A>(), MonoKKindedJ<A> {
   fun <B> map(f: (A) -> B): MonoK<B> =
       mono.map(f).k()
 

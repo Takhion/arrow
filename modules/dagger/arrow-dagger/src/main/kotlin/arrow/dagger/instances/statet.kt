@@ -1,5 +1,6 @@
 package arrow.dagger.instances
 
+import arrow.KindType
 import arrow.data.StateTPartialOf
 import arrow.instances.StateTApplicativeInstance
 import arrow.instances.StateTFunctorInstance
@@ -11,7 +12,7 @@ import dagger.Provides
 import javax.inject.Inject
 
 @Module
-abstract class StateTInstances<F, S> {
+abstract class StateTInstances<F: KindType, S> {
 
   @Provides
   fun stateTFunctor(ev: DaggerStateTFunctorInstance<F, S>): Functor<StateTPartialOf<F, S>> = ev
@@ -29,18 +30,18 @@ abstract class StateTInstances<F, S> {
   fun stateTMonadError(ev: DaggerStateTMonadErrorInstance<F, S>): MonadError<StateTPartialOf<F, S>, S> = ev
 }
 
-class DaggerStateTFunctorInstance<F, L> @Inject constructor(val FF: Functor<F>) : StateTFunctorInstance<F, L> {
+class DaggerStateTFunctorInstance<F: KindType, L> @Inject constructor(val FF: Functor<F>) : StateTFunctorInstance<F, L> {
   override fun FF(): Functor<F> = FF
 }
 
-class DaggerStateTApplicativeInstance<F, L> @Inject constructor(val MF: Monad<F>) : StateTApplicativeInstance<F, L> {
+class DaggerStateTApplicativeInstance<F: KindType, L> @Inject constructor(val MF: Monad<F>) : StateTApplicativeInstance<F, L> {
   override fun FF(): Monad<F> = MF
 }
 
-class DaggerStateTMonadInstance<F, L> @Inject constructor(val MF: Monad<F>) : StateTMonadInstance<F, L> {
+class DaggerStateTMonadInstance<F: KindType, L> @Inject constructor(val MF: Monad<F>) : StateTMonadInstance<F, L> {
   override fun FF(): Monad<F> = MF
 }
 
-class DaggerStateTMonadErrorInstance<F, L> @Inject constructor(val MF: MonadError<F, L>) : StateTMonadErrorInstance<F, L, L> {
+class DaggerStateTMonadErrorInstance<F: KindType, L> @Inject constructor(val MF: MonadError<F, L>) : StateTMonadErrorInstance<F, L, L> {
   override fun FF(): MonadError<F, L> = MF
 }

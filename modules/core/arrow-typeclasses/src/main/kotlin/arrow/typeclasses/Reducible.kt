@@ -1,5 +1,6 @@
 package arrow.typeclasses
 
+import arrow.KindType
 import arrow.Kind
 import arrow.core.*
 
@@ -14,7 +15,7 @@ import arrow.core.*
  *  - reduceLeftTo(fa)(f)(g) eagerly reduces with an additional mapping function
  *  - reduceRightTo(fa)(f)(g) lazily reduces with an additional mapping function
  */
-interface Reducible<F> : Foldable<F> {
+interface Reducible<F: KindType> : Foldable<F> {
 
   /**
    * Left-associative reduction on F using the function f.
@@ -61,7 +62,7 @@ interface Reducible<F> : Foldable<F> {
    *
    * This method is a generalization of reduce.
    */
-  fun <G, A> Kind<F, Kind<G, A>>.reduceK(SG: SemigroupK<G>): Kind<G, A> = SG.run {
+  fun <G: KindType, A> Kind<F, Kind<G, A>>.reduceK(SG: SemigroupK<G>): Kind<G, A> = SG.run {
     reduce(algebra())
   }
 
@@ -78,7 +79,7 @@ interface Reducible<F> : Foldable<F> {
  *
  * This class can be used on any type where the first value (A) and the "rest" of the values (G<A>) can be easily found.
  */
-interface NonEmptyReducible<F, G> : Reducible<F> {
+interface NonEmptyReducible<F: KindType, G: KindType> : Reducible<F> {
 
   fun FG(): Foldable<G>
 

@@ -8,7 +8,7 @@ sealed class IntList
 object Nil : IntList()
 data class Cons(val head: Int, val tail: IntList) : IntList()
 
-@higherkind sealed class IntListPattern<out A> : IntListPatternOf<A> { companion object }
+@higherkind sealed class IntListPattern<out A> : IntListPatternOf<A>() { companion object }
 object NilPattern : IntListPattern<Nothing>()
 @higherkind data class ConsPattern<out A>(val head: Int, val tail: A) : IntListPattern<A>()
 

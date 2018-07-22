@@ -1,6 +1,7 @@
 package arrow.recursion.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Eval
 import arrow.core.Eval.Now
 import arrow.higherkind
@@ -16,26 +17,26 @@ import arrow.recursion.typeclasses.Recursive
  * This type is the type level encoding of ana.
  */
 @higherkind
-class Nu<out F>(val a: Any?, val unNu: Coalgebra<F, Any?>) : NuOf<F> {
+class Nu<out F: KindType>(val a: Any?, val unNu: Coalgebra<F, Any?>) : NuOf<F>() {
   companion object {
     // Necessary because of Coalgebra's variance
     @Suppress("UNCHECKED_CAST")
-    operator fun <F, A> invoke(a: A, unNu: Coalgebra<F, A>) = Nu(a) { it -> unNu(it as A) }
+    operator fun <F: KindType, A> invoke(a: A, unNu: Coalgebra<F, A>) = Nu(a) { it -> unNu(it as A) }
   }
 }
 
 @instance(Nu::class)
 interface NuBirecursiveInstance : Birecursive<ForNu> {
-  override fun <F> Functor<F>.projectT(tf: Kind<ForNu, F>): Kind<F, Nu<F>> {
+  override fun <F: KindType> Functor<F>.projectT(tf: Kind<ForNu, F>): Kind<F, Nu<F>> {
     val fix = tf.fix()
     val unNu = fix.unNu
     return unNu(fix.a).map { Nu(it, unNu) }
   }
 
-  override fun <F> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForNu, F>>>) =
+  override fun <F: KindType> Functor<F>.embedT(tf: Kind<F, Eval<Kind<ForNu, F>>>) =
     Eval.now(Nu.invoke(tf) { f -> f.map { nu -> projectT(nu.value()).map(::Now) } })
 
-  override fun <F, A> Functor<F>.ana(a: A, coalg: Coalgebra<F, A>) =
+  override fun <F: KindType, A> Functor<F>.ana(a: A, coalg: Coalgebra<F, A>) =
     Nu(a, coalg)
 }
 

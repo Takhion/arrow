@@ -1,6 +1,13 @@
 package arrow
 
-interface Kind<out F, out A>
+sealed class KindType
+
+abstract class Witness<out F: KindType> : KindType()
+
+abstract class Kind<out F: KindType, out A> : KindType()
+
+typealias Kind_ = Kind<*, *>
+
 typealias Kind2<F, A, B> = Kind<Kind<F, A>, B>
 typealias Kind3<F, A, B, C> = Kind<Kind2<F, A, B>, C>
 typealias Kind4<F, A, B, C, D> = Kind<Kind3<F, A, B, C>, D>

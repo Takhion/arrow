@@ -1,6 +1,7 @@
 package arrow.data
 
 import arrow.Kind
+import arrow.KindType
 import arrow.core.Either
 import arrow.core.Eval
 import arrow.core.Tuple2
@@ -11,7 +12,7 @@ import arrow.typeclasses.Applicative
 fun <A> SequenceKOf<A>.toList(): List<A> = this.fix().sequence.toList()
 
 @higherkind
-data class SequenceK<out A>(val sequence: Sequence<A>) : SequenceKOf<A>, Sequence<A> by sequence {
+data class SequenceK<out A>(val sequence: Sequence<A>) : SequenceKOf<A>(), Sequence<A> by sequence {
 
   fun <B> flatMap(f: (A) -> SequenceKOf<B>): SequenceK<B> = this.fix().sequence.flatMap { f(it).fix().sequence }.k()
 
@@ -29,7 +30,7 @@ data class SequenceK<out A>(val sequence: Sequence<A>) : SequenceKOf<A>, Sequenc
     return Eval.defer { loop(this.fix()) }
   }
 
-  fun <G, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, SequenceK<B>> = GA.run {
+  fun <G: KindType, B> traverse(GA: Applicative<G>, f: (A) -> Kind<G, B>): Kind<G, SequenceK<B>> = GA.run {
     foldRight(Eval.always { just(emptySequence<B>().k()) }) { a, eval ->
       f(a).map2Eval(eval) { (sequenceOf(it.a) + it.b).k() }
     }.value()
@@ -80,7 +81,7 @@ data class SequenceK<out A>(val sequence: Sequence<A>) : SequenceKOf<A>, Sequenc
 
 fun <A> SequenceKOf<A>.combineK(y: SequenceKOf<A>): SequenceK<A> = (fix().sequence + y.fix().sequence).k()
 
-inline fun <A, G> SequenceKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, SequenceK<A>> =
+inline fun <A, G: KindType> SequenceKOf<Kind<G, A>>.sequence(GA: Applicative<G>): Kind<G, SequenceK<A>> =
   fix().traverse(GA, ::identity)
 
 fun <A> Sequence<A>.k(): SequenceK<A> = SequenceK(this)
